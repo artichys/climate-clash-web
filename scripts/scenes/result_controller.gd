@@ -4,6 +4,7 @@ var run_state: RunState
 
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
+	UIStyle.apply_to_scene(self)
 
 	var title: Label = get_node_or_null("Margin/VBox/ResultTitle")
 	if title == null:
