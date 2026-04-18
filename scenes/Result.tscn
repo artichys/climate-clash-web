@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://cl7n1j2hddanx"]
 
+[ext_resource type="Script" path="res://scripts/scenes/result_controller.gd" id="1_j8p1w"]
+
 [node name="Control" type="Control" unique_id=2067784098]
 custom_minimum_size = Vector2(1920, 1080)
 layout_mode = 3
@@ -8,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_j8p1w")
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=412299043]
 custom_minimum_size = Vector2(1760, 1000)

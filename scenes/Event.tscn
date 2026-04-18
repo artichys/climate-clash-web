@@ -1,10 +1,13 @@
 [gd_scene format=3 uid="uid://j7kfl6x72rcq"]
 
+[ext_resource type="Script" path="res://scripts/scenes/event_controller.gd" id="1_xi173"]
+
 [node name="Event" type="Control" unique_id=1938323979]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+script = ExtResource("1_xi173")
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=2134440275]
 custom_minimum_size = Vector2(1760, 1000)
