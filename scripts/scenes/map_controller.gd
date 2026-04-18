@@ -6,6 +6,7 @@ var node_list_label: Label
 
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
+	UIStyle.apply_to_scene(self)
 	info_label = get_node("Margin/VBox/InfoLabel")
 	node_list_label = get_node("Margin/VBox/NodeListLabel")
 

@@ -4,6 +4,7 @@ var run_state: RunState
 
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
+	UIStyle.apply_to_scene(self)
 
 	get_node("Margin/VBox/StartButton").pressed.connect(_on_start_pressed)
 	get_node("Margin/VBox/ExitButton").pressed.connect(_on_exit_pressed)
