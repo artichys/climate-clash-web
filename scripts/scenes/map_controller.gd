@@ -48,8 +48,16 @@ func _on_continue_pressed() -> void:
 
 	if node.node_type == GameEnums.NodeType.EVENT:
 		get_tree().change_scene_to_file("res://scenes/Event.tscn")
-	else:
-		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+		return
+
+	get_tree().change_scene_to_file(_get_battle_scene_for_node(node))
+
+func _get_battle_scene_for_node(node: RunNodeData) -> String:
+	if node.enemy_kind == GameEnums.EnemyType.FLOOD:
+		return "res://scenes/BattleFlood.tscn"
+	if node.enemy_kind == GameEnums.EnemyType.HEATWAVE:
+		return "res://scenes/BattleHeatwave.tscn"
+	return "res://scenes/BattleBoss.tscn"
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
