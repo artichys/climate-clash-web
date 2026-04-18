@@ -1,11 +1,25 @@
-extends Node
+extends Control
 
+var run_state: RunState
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	run_state = get_node("/root/RunStateNode")
 
+	get_node("Margin/VBox/HealButton").pressed.connect(_on_heal)
+	get_node("Margin/VBox/CoolButton").pressed.connect(_on_cool)
+	get_node("Margin/VBox/DrawButton").pressed.connect(_on_draw)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func _on_heal() -> void:
+	run_state.heal_player(15)
+	run_state.advance_node()
+	get_tree().change_scene_to_file("res://scenes/Map.tscn")
+
+func _on_cool() -> void:
+	run_state.add_temperature(-3)
+	run_state.advance_node()
+	get_tree().change_scene_to_file("res://scenes/Map.tscn")
+
+func _on_draw() -> void:
+	run_state.add_pending_extra_draw(3)
+	run_state.advance_node()
+	get_tree().change_scene_to_file("res://scenes/Map.tscn")
