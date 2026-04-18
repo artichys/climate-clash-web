@@ -11,8 +11,13 @@ config_version=5
 [application]
 
 config/name="Climate Clash Web"
+run/main_scene="uid://bdl7lqap7oeh3"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[autoload]
+
+RunStateNode="*uid://bhhvro2hcxbl8"
 
 [display]
 
