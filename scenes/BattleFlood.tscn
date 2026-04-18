@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://ihsh0tx8bl0v" path="res://assets/placeholders/backgrounds/flood_bg.png.png" id="1_fcveg"]
 [ext_resource type="Script" uid="uid://cbrvprmxjsc3a" path="res://scripts/scenes/battle_controller.gd" id="2_oe4f3"]
+[ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_ecs25"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -22,7 +23,7 @@ grow_vertical = 2
 texture = ExtResource("1_fcveg")
 expand_mode = 1
 
-[node name="CharacterLayer" type="Control" parent="."]
+[node name="CharacterLayer" type="Control" parent="." unique_id=752514172]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,7 +32,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="PlayerMC" type="TextureRect" parent="CharacterLayer"]
+[node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=802190803]
 layout_mode = 0
 offset_left = 120.0
 offset_top = 380.0
@@ -40,7 +41,7 @@ offset_bottom = 980.0
 expand_mode = 1
 stretch_mode = 5
 
-[node name="EnemyMC" type="TextureRect" parent="CharacterLayer"]
+[node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=1575153849]
 layout_mode = 0
 offset_left = 1400.0
 offset_top = 300.0
@@ -63,6 +64,10 @@ layout_mode = 2
 [node name="ArenaTitle" type="Label" parent="Margin/VBox" unique_id=2136705519]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.6117647, 0.83137256, 0.7529412, 1)
+theme_override_colors/font_shadow_color = Color(0.3207582, 0.24384671, 0.13801113, 1)
+theme_override_fonts/font = ExtResource("3_ecs25")
+theme_override_font_sizes/font_size = 64
 text = "Flood Monster Arena"
 horizontal_alignment = 1
 vertical_alignment = 1
