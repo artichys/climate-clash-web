@@ -22,6 +22,33 @@ grow_vertical = 2
 texture = ExtResource("1_fcveg")
 expand_mode = 1
 
+[node name="CharacterLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PlayerMC" type="TextureRect" parent="CharacterLayer"]
+layout_mode = 0
+offset_left = 120.0
+offset_top = 380.0
+offset_right = 520.0
+offset_bottom = 980.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EnemyMC" type="TextureRect" parent="CharacterLayer"]
+layout_mode = 0
+offset_left = 1400.0
+offset_top = 300.0
+offset_right = 1800.0
+offset_bottom = 900.0
+expand_mode = 1
+stretch_mode = 5
+
 [node name="Margin" type="MarginContainer" parent="." unique_id=1529091857]
 custom_minimum_size = Vector2(1760, 1000)
 layout_mode = 0
@@ -65,12 +92,12 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=1879194285]
-custom_minimum_size = Vector2(0, 550)
+custom_minimum_size = Vector2(0, 340)
 layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1855964187]
 clip_contents = false
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 360)
 layout_direction = 3
 layout_mode = 2
 
