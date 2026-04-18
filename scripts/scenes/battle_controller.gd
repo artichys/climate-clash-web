@@ -1,5 +1,16 @@
 extends Control
 
+const CARD_ART_BASE_PATH := "res://assets/placeholders/cards"
+const PLAYER_ART_CANDIDATES: Array[String] = [
+	"res://assets/placeholders/characters/mc.png",
+	"res://assets/placeholders/characters/player.png",
+	"res://icon.svg"
+]
+const HAND_CARD_SIZE := Vector2(240.0, 360.0)
+const HAND_CARD_GAP := 16
+const CARD_OVERLAY_TOP_HEIGHT := 46.0
+const CARD_OVERLAY_BOTTOM_HEIGHT := 118.0
+
 var run_state: RunState
 var deck_service: DeckService
 var enemy: EnemyData
@@ -30,6 +41,14 @@ var log_label: RichTextLabel
 var meter_bar: TextureProgressBar
 var hand_hbox: HBoxContainer
 var end_turn_button: Button
+var character_layer: Control
+var player_mc: TextureRect
+var enemy_mc: TextureRect
+var player_mc_base_pos: Vector2 = Vector2.ZERO
+var enemy_mc_base_pos: Vector2 = Vector2.ZERO
+var player_idle_tween: Tween
+var enemy_idle_tween: Tween
+var card_art_cache: Dictionary = {}
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -42,6 +61,7 @@ func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
 
 	_cache_ui_nodes()
+	UIStyle.apply_to_scene(self)
 	_bind_ui_events()
 
 	var node := run_state.get_current_node()
@@ -52,6 +72,7 @@ func _ready() -> void:
 	enemy = GameDatabase.get_enemy_by_type(node.enemy_kind)
 	enemy_hp = enemy.max_hp
 	is_boss_battle = node.node_type == GameEnums.NodeType.BOSS
+	_setup_character_art()
 
 	deck_service = DeckService.new(run_state.deck_card_ids)
 	draw_bonus_next_turn += run_state.consume_pending_extra_draw()
@@ -68,6 +89,9 @@ func _cache_ui_nodes() -> void:
 	hand_hbox = get_node("Margin/VBox/HandScroll/HandHBox")
 	energy_label = get_node("Margin/VBox/BottomRow/EnergyLabel")
 	end_turn_button = get_node("Margin/VBox/BottomRow/EndTurnButton")
+	character_layer = get_node_or_null("CharacterLayer")
+	player_mc = get_node_or_null("CharacterLayer/PlayerMC")
+	enemy_mc = get_node_or_null("CharacterLayer/EnemyMC")
 
 	reward_panel = get_node("RewardPanel")
 	reward_button_a = get_node_or_null("RewardPanel/RewardVBox/RewardButtons/RewardButtonA")
@@ -120,6 +144,8 @@ func _refresh_ui() -> void:
 	_refresh_hand_buttons()
 
 func _refresh_hand_buttons() -> void:
+	hand_hbox.add_theme_constant_override("separation", HAND_CARD_GAP)
+
 	for child in hand_hbox.get_children():
 		child.queue_free()
 
@@ -127,17 +153,179 @@ func _refresh_hand_buttons() -> void:
 	for i in range(hand.size()):
 		var card := hand[i]
 		var cost := _get_effective_cost(card)
+		hand_hbox.add_child(_create_hand_card_view(card, i, cost))
 
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(220, 130)
-		button.text = _build_card_text(card, cost)
-		button.disabled = (not is_player_turn) or (cost > player_energy) or battle_finished
+func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int) -> Control:
+	var card_root := Panel.new()
+	card_root.custom_minimum_size = HAND_CARD_SIZE
+	card_root.add_theme_stylebox_override("panel", _make_card_border_style(card))
 
-		button.pressed.connect(func() -> void:
-			_try_play_card(i)
-		)
+	var fallback_bg := ColorRect.new()
+	fallback_bg.layout_mode = 1
+	fallback_bg.anchors_preset = 15
+	fallback_bg.anchor_right = 1.0
+	fallback_bg.anchor_bottom = 1.0
+	fallback_bg.grow_horizontal = 2
+	fallback_bg.grow_vertical = 2
+	fallback_bg.color = _get_card_type_color(card.type, 0.28)
+	card_root.add_child(fallback_bg)
 
-		hand_hbox.add_child(button)
+	var art := TextureRect.new()
+	art.layout_mode = 1
+	art.anchors_preset = 15
+	art.anchor_right = 1.0
+	art.anchor_bottom = 1.0
+	art.grow_horizontal = 2
+	art.grow_vertical = 2
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.texture = _get_card_art(card.id)
+	card_root.add_child(art)
+
+	var top_overlay := ColorRect.new()
+	top_overlay.layout_mode = 0
+	top_overlay.anchor_right = 1.0
+	top_overlay.offset_right = HAND_CARD_SIZE.x
+	top_overlay.offset_bottom = CARD_OVERLAY_TOP_HEIGHT
+	top_overlay.color = Color(0.0, 0.0, 0.0, 0.55)
+	card_root.add_child(top_overlay)
+
+	var bottom_overlay := ColorRect.new()
+	bottom_overlay.layout_mode = 0
+	bottom_overlay.anchor_top = 1.0
+	bottom_overlay.anchor_right = 1.0
+	bottom_overlay.anchor_bottom = 1.0
+	bottom_overlay.offset_top = -CARD_OVERLAY_BOTTOM_HEIGHT
+	bottom_overlay.offset_right = HAND_CARD_SIZE.x
+	bottom_overlay.offset_bottom = HAND_CARD_SIZE.y
+	bottom_overlay.color = Color(0.0, 0.0, 0.0, 0.62)
+	card_root.add_child(bottom_overlay)
+
+	var cost_label := Label.new()
+	cost_label.layout_mode = 0
+	cost_label.offset_left = 12.0
+	cost_label.offset_top = 6.0
+	cost_label.offset_right = HAND_CARD_SIZE.x - 12.0
+	cost_label.offset_bottom = 36.0
+	cost_label.text = "COST %d" % effective_cost
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cost_label.add_theme_font_size_override("font_size", 20)
+	cost_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
+	card_root.add_child(cost_label)
+
+	var name_label := Label.new()
+	name_label.layout_mode = 0
+	name_label.offset_left = 12.0
+	name_label.offset_top = HAND_CARD_SIZE.y - CARD_OVERLAY_BOTTOM_HEIGHT + 8.0
+	name_label.offset_right = HAND_CARD_SIZE.x - 12.0
+	name_label.offset_bottom = HAND_CARD_SIZE.y - 70.0
+	name_label.text = card.display_name
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	name_label.add_theme_font_size_override("font_size", 17)
+	name_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	card_root.add_child(name_label)
+
+	var effect_label := Label.new()
+	effect_label.layout_mode = 0
+	effect_label.offset_left = 12.0
+	effect_label.offset_top = HAND_CARD_SIZE.y - 68.0
+	effect_label.offset_right = HAND_CARD_SIZE.x - 12.0
+	effect_label.offset_bottom = HAND_CARD_SIZE.y - 10.0
+	effect_label.text = _build_card_short_text(card)
+	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effect_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	effect_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	effect_label.add_theme_font_size_override("font_size", 14)
+	effect_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
+	card_root.add_child(effect_label)
+
+	var click_button := Button.new()
+	click_button.layout_mode = 1
+	click_button.anchors_preset = 15
+	click_button.anchor_right = 1.0
+	click_button.anchor_bottom = 1.0
+	click_button.grow_horizontal = 2
+	click_button.grow_vertical = 2
+	click_button.flat = true
+	click_button.text = ""
+	click_button.focus_mode = Control.FOCUS_NONE
+	click_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	click_button.tooltip_text = _build_card_text(card, effective_cost)
+
+	var no_style := StyleBoxEmpty.new()
+	click_button.add_theme_stylebox_override("normal", no_style)
+	click_button.add_theme_stylebox_override("hover", no_style)
+	click_button.add_theme_stylebox_override("pressed", no_style)
+	click_button.add_theme_stylebox_override("focus", no_style)
+	click_button.add_theme_stylebox_override("disabled", no_style)
+
+	var can_play := is_player_turn and (not battle_finished) and (effective_cost <= player_energy)
+	click_button.disabled = not can_play
+	click_button.pressed.connect(_on_hand_card_pressed.bind(hand_index))
+	card_root.add_child(click_button)
+
+	if not can_play:
+		card_root.modulate = Color(0.6, 0.6, 0.6, 0.9)
+
+	return card_root
+
+func _on_hand_card_pressed(hand_index: int) -> void:
+	_try_play_card(hand_index)
+
+func _build_card_short_text(card: CardData) -> String:
+	var lines: Array[String] = []
+
+	if card.damage > 0:
+		lines.append("DMG %d" % card.damage)
+	if card.block > 0:
+		lines.append("BLK %d" % card.block)
+	if card.heal > 0:
+		lines.append("HEAL %d" % card.heal)
+	if card.meter_delta != 0:
+		lines.append("TEMP %d" % card.meter_delta)
+	if card.draw_now > 0:
+		lines.append("DRAW %d" % card.draw_now)
+	if card.draw_next_turn > 0:
+		lines.append("NEXT DRAW %d" % card.draw_next_turn)
+	if card.heal_next_turn > 0:
+		lines.append("NEXT HEAL %d" % card.heal_next_turn)
+	if card.offensive_buff > 0:
+		lines.append("BUFF %d" % card.offensive_buff)
+	if card.reduce_all_costs_this_turn:
+		lines.append("ALL COST -1")
+	if card.exhaust:
+		lines.append("EXHAUST")
+
+	if lines.is_empty():
+		return "No extra effect"
+
+	return " | ".join(PackedStringArray(lines))
+
+func _make_card_border_style(card: CardData) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	style.border_color = _get_card_type_color(card.type, 1.0)
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	return style
+
+func _get_card_type_color(card_type: int, alpha: float = 1.0) -> Color:
+	if card_type == GameEnums.CardType.DEFENSIVE:
+		return Color(0.32, 0.74, 1.0, alpha)
+	if card_type == GameEnums.CardType.OFFENSIVE:
+		return Color(1.0, 0.42, 0.42, alpha)
+	if card_type == GameEnums.CardType.UTILITY:
+		return Color(0.45, 0.92, 0.55, alpha)
+	return Color(0.98, 0.82, 0.35, alpha)
 
 func _build_card_text(card: CardData, effective_cost: int) -> String:
 	var text := "%s\nCost: %d\nType: %s | Elemen: %s" % [
@@ -205,6 +393,8 @@ func _apply_card_effects(card: CardData) -> void:
 		var damage := DamageCalculator.calculate_damage(card, enemy, offensive_buff_this_combat)
 		enemy_hp = maxi(0, enemy_hp - damage)
 		var mult := DamageCalculator.get_element_multiplier(enemy.type, card.element)
+		_play_player_attack_animation()
+		_play_enemy_hit_animation()
 		_log("Damage ke %s: %d (x%.1f)" % [enemy.display_name, damage, mult])
 
 	if card.heal > 0:
@@ -256,9 +446,11 @@ func _enemy_turn_async() -> void:
 	var attack := _calculate_enemy_attack_damage()
 	var damage_to_hp := maxi(0, attack - player_block)
 	player_block = maxi(0, player_block - attack)
+	_play_enemy_attack_animation()
 
 	if damage_to_hp > 0:
 		run_state.apply_damage_to_player(damage_to_hp)
+		_play_player_hit_animation()
 
 	_log("%s menyerang: %d (HP kena: %d)" % [enemy.display_name, attack, damage_to_hp])
 
@@ -354,6 +546,113 @@ func _pick_reward(card: CardData) -> void:
 	run_state.add_card_to_deck(card.id)
 	run_state.advance_node()
 	get_tree().change_scene_to_file("res://scenes/Map.tscn")
+
+func _setup_character_art() -> void:
+	if character_layer == null or player_mc == null or enemy_mc == null:
+		return
+
+	player_mc.texture = _load_first_texture(PLAYER_ART_CANDIDATES)
+	enemy_mc.texture = _load_first_texture(_get_enemy_art_candidates())
+
+	player_mc_base_pos = player_mc.position
+	enemy_mc_base_pos = enemy_mc.position
+	_start_idle_animation()
+
+func _get_enemy_art_candidates() -> Array[String]:
+	if enemy == null:
+		return ["res://assets/placeholders/characters/enemy.png", "res://icon.svg"]
+
+	if enemy.type == GameEnums.EnemyType.FLOOD:
+		return [
+			"res://assets/placeholders/characters/enemy_flood.png",
+			"res://assets/placeholders/characters/enemy.png",
+			"res://icon.svg"
+		]
+	if enemy.type == GameEnums.EnemyType.HEATWAVE:
+		return [
+			"res://assets/placeholders/characters/enemy_heatwave.png",
+			"res://assets/placeholders/characters/enemy.png",
+			"res://icon.svg"
+		]
+	return [
+		"res://assets/placeholders/characters/enemy_boss.png",
+		"res://assets/placeholders/characters/enemy.png",
+		"res://icon.svg"
+	]
+
+func _load_first_texture(paths: Array[String]) -> Texture2D:
+	for path in paths:
+		if ResourceLoader.exists(path):
+			var tex := load(path)
+			if tex is Texture2D:
+				return tex as Texture2D
+	return null
+
+func _get_card_art(card_id: String) -> Texture2D:
+	if card_art_cache.has(card_id):
+		return card_art_cache[card_id] as Texture2D
+
+	var candidates: Array[String] = [
+		"%s/%s.png" % [CARD_ART_BASE_PATH, card_id],
+		"%s/%s.webp" % [CARD_ART_BASE_PATH, card_id],
+		"%s/%s.jpg" % [CARD_ART_BASE_PATH, card_id],
+		"%s/%s.jpeg" % [CARD_ART_BASE_PATH, card_id]
+	]
+
+	var art := _load_first_texture(candidates)
+	card_art_cache[card_id] = art
+	return art
+
+func _start_idle_animation() -> void:
+	if player_mc != null:
+		if player_idle_tween != null:
+			player_idle_tween.kill()
+		player_idle_tween = create_tween().set_loops()
+		player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	if enemy_mc != null:
+		if enemy_idle_tween != null:
+			enemy_idle_tween.kill()
+		enemy_idle_tween = create_tween().set_loops()
+		enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _play_player_attack_animation() -> void:
+	if player_mc == null:
+		return
+	var t := create_tween()
+	t.tween_property(player_mc, "position:x", player_mc_base_pos.x + 48.0, 0.09)
+	t.tween_property(player_mc, "position:x", player_mc_base_pos.x, 0.11)
+
+func _play_enemy_attack_animation() -> void:
+	if enemy_mc == null:
+		return
+	var t := create_tween()
+	t.tween_property(enemy_mc, "position:x", enemy_mc_base_pos.x - 48.0, 0.09)
+	t.tween_property(enemy_mc, "position:x", enemy_mc_base_pos.x, 0.11)
+
+func _play_enemy_hit_animation() -> void:
+	if enemy_mc == null:
+		return
+	enemy_mc.modulate = Color(1.0, 0.65, 0.65, 1.0)
+	var t := create_tween()
+	t.tween_interval(0.09)
+	t.tween_callback(func() -> void:
+		if enemy_mc != null:
+			enemy_mc.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	)
+
+func _play_player_hit_animation() -> void:
+	if player_mc == null:
+		return
+	player_mc.modulate = Color(1.0, 0.65, 0.65, 1.0)
+	var t := create_tween()
+	t.tween_interval(0.09)
+	t.tween_callback(func() -> void:
+		if player_mc != null:
+			player_mc.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	)
 
 func _handle_battle_lose(reason: String) -> void:
 	if battle_finished:
