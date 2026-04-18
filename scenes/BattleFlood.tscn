@@ -64,6 +64,10 @@ layout_mode = 2
 [node name="LogLabel" type="RichTextLabel" parent="Margin/VBox" unique_id=797412774]
 layout_mode = 2
 
+[node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=1879194285]
+custom_minimum_size = Vector2(0, 550)
+layout_mode = 2
+
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1855964187]
 clip_contents = false
 custom_minimum_size = Vector2(0, 150)
