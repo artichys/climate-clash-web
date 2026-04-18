@@ -4,6 +4,7 @@ var run_state: RunState
 
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
+	UIStyle.apply_to_scene(self)
 
 	get_node("Margin/VBox/HealButton").pressed.connect(_on_heal)
 	get_node("Margin/VBox/CoolButton").pressed.connect(_on_cool)
