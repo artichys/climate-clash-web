@@ -1,11 +1,16 @@
-extends Node
+extends Control
 
+var run_state: RunState
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	run_state = get_node("/root/RunStateNode")
 
+	get_node("Margin/VBox/StartButton").pressed.connect(_on_start_pressed)
+	get_node("Margin/VBox/ExitButton").pressed.connect(_on_exit_pressed)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func _on_start_pressed() -> void:
+	run_state.reset_for_new_run()
+	get_tree().change_scene_to_file("res://scenes/Map.tscn")
+
+func _on_exit_pressed() -> void:
+	get_tree().quit()
