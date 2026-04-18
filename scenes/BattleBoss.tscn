@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://unxdqkocc6x"]
 
 [ext_resource type="Texture2D" uid="uid://bob6bn5nhrmm2" path="res://assets/placeholders/backgrounds/boss_bg.png" id="1_1n7qe"]
+[ext_resource type="Script" path="res://scripts/scenes/battle_controller.gd" id="2_8q81s"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("2_8q81s")
 
 [node name="ArenaBackground" type="TextureRect" parent="." unique_id=679379965]
 layout_mode = 1

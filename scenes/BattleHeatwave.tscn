@@ -62,11 +62,12 @@ layout_mode = 2
 [node name="LogLabel" type="RichTextLabel" parent="Margin/VBox" unique_id=797412774]
 layout_mode = 2
 
-[node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1794877593]
-custom_minimum_size = Vector2(0, 50)
+[node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=243771617]
+clip_contents = false
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 
-[node name="HandHBox" type="HBoxContainer" parent="Margin/VBox/HandScroll" unique_id=1029806446]
+[node name="HandHBox" type="HBoxContainer" parent="Margin/VBox/HandScroll" unique_id=2029469379]
 layout_mode = 2
 
 [node name="BottomRow" type="HBoxContainer" parent="Margin/VBox" unique_id=1904169846]

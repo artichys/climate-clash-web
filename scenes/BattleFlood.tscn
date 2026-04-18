@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dxlbi00vjhbb7"]
 
 [ext_resource type="Texture2D" uid="uid://ihsh0tx8bl0v" path="res://assets/placeholders/backgrounds/flood_bg.png.png" id="1_fcveg"]
+[ext_resource type="Script" uid="uid://cbrvprmxjsc3a" path="res://scripts/scenes/battle_controller.gd" id="2_oe4f3"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("2_oe4f3")
 
 [node name="ArenaBackground" type="TextureRect" parent="." unique_id=679379965]
 layout_mode = 1
@@ -62,11 +64,13 @@ layout_mode = 2
 [node name="LogLabel" type="RichTextLabel" parent="Margin/VBox" unique_id=797412774]
 layout_mode = 2
 
-[node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1794877593]
-custom_minimum_size = Vector2(0, 50)
+[node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1855964187]
+clip_contents = false
+custom_minimum_size = Vector2(0, 150)
+layout_direction = 3
 layout_mode = 2
 
-[node name="HandHBox" type="HBoxContainer" parent="Margin/VBox/HandScroll" unique_id=1029806446]
+[node name="HandHBox" type="HBoxContainer" parent="Margin/VBox/HandScroll" unique_id=318988511]
 layout_mode = 2
 
 [node name="BottomRow" type="HBoxContainer" parent="Margin/VBox" unique_id=1904169846]
