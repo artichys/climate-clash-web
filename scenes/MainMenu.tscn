@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://bdl7lqap7oeh3"]
 
+[ext_resource type="Script" path="res://scripts/scenes/main_menu_controller.gd" id="1_p8sj7"]
+
 [node name="MainMenu" type="Control" unique_id=1399402748]
 layout_mode = 3
 anchors_preset = 15
@@ -7,6 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_p8sj7")
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=1813898804]
 custom_minimum_size = Vector2(1760, 1000)

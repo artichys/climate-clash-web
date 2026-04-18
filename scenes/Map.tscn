@@ -1,10 +1,13 @@
 [gd_scene format=3 uid="uid://c8r8oyrxjabf5"]
 
+[ext_resource type="Script" path="res://scripts/scenes/map_controller.gd" id="1_ss1we"]
+
 [node name="Map" type="Control" unique_id=141948133]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+script = ExtResource("1_ss1we")
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=1638403529]
 custom_minimum_size = Vector2(1760, 1000)
