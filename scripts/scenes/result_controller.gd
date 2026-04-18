@@ -5,8 +5,14 @@ var run_state: RunState
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
 
-	var title: Label = get_node("Margin/VBox/ResultTitle")
-	var detail: Label = get_node("Margin/VBox/ResultDetail")
+	var title: Label = get_node_or_null("Margin/VBox/ResultTitle")
+	if title == null:
+		title = get_node_or_null("Margin/VBox/ResultTittle")
+
+	var detail: Label = get_node_or_null("Margin/VBox/ResultDetail")
+	if title == null or detail == null:
+		push_error("Result scene node tidak lengkap. Periksa ResultTitle/ResultDetail.")
+		return
 
 	title.text = "VICTORY - Neo-Archipelago Saved" if run_state.last_run_won else "GAME OVER"
 	detail.text = run_state.last_run_message if run_state.last_run_message != "" else "Run selesai."
