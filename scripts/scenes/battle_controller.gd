@@ -174,10 +174,27 @@ func _refresh_hand_buttons() -> void:
 		hand_hbox.add_child(_create_hand_card_view(card, i, cost))
 
 func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int) -> Control:
-	var card_root := Panel.new()
-	card_root.custom_minimum_size = HAND_CARD_SIZE
+	var card_root := Control.new()
+	card_root.custom_minimum_size = HAND_CARD_SIZE + Vector2(6.0, 8.0)
 	card_root.pivot_offset = HAND_CARD_SIZE * 0.5
-	card_root.add_theme_stylebox_override("panel", _make_card_border_style(card))
+
+	var shadow_panel := Panel.new()
+	shadow_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow_panel.layout_mode = 0
+	shadow_panel.offset_left = 6.0
+	shadow_panel.offset_top = 8.0
+	shadow_panel.offset_right = HAND_CARD_SIZE.x + 6.0
+	shadow_panel.offset_bottom = HAND_CARD_SIZE.y + 8.0
+	shadow_panel.add_theme_stylebox_override("panel", _make_card_shadow_style())
+	card_root.add_child(shadow_panel)
+
+	var card_surface := Panel.new()
+	card_surface.layout_mode = 0
+	card_surface.offset_right = HAND_CARD_SIZE.x
+	card_surface.offset_bottom = HAND_CARD_SIZE.y
+	card_surface.clip_contents = true
+	card_surface.add_theme_stylebox_override("panel", _make_card_border_style(card))
+	card_root.add_child(card_surface)
 
 	var fallback_bg := ColorRect.new()
 	fallback_bg.layout_mode = 1
@@ -187,7 +204,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	fallback_bg.grow_horizontal = 2
 	fallback_bg.grow_vertical = 2
 	fallback_bg.color = _get_card_type_color(card.type, 0.28)
-	card_root.add_child(fallback_bg)
+	card_surface.add_child(fallback_bg)
 
 	var art := TextureRect.new()
 	art.layout_mode = 1
@@ -199,7 +216,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	art.texture = _get_card_art(card.id)
-	card_root.add_child(art)
+	card_surface.add_child(art)
 
 	var top_overlay := ColorRect.new()
 	top_overlay.layout_mode = 0
@@ -207,7 +224,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	top_overlay.offset_right = HAND_CARD_SIZE.x
 	top_overlay.offset_bottom = CARD_OVERLAY_TOP_HEIGHT
 	top_overlay.color = Color(0.0, 0.0, 0.0, 0.55)
-	card_root.add_child(top_overlay)
+	card_surface.add_child(top_overlay)
 
 	var bottom_overlay := ColorRect.new()
 	bottom_overlay.layout_mode = 0
@@ -218,7 +235,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	bottom_overlay.offset_right = HAND_CARD_SIZE.x
 	bottom_overlay.offset_bottom = HAND_CARD_SIZE.y
 	bottom_overlay.color = Color(0.0, 0.0, 0.0, 0.62)
-	card_root.add_child(bottom_overlay)
+	card_surface.add_child(bottom_overlay)
 
 	var cost_label := Label.new()
 	cost_label.layout_mode = 0
@@ -231,7 +248,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	cost_label.add_theme_font_size_override("font_size", 20)
 	cost_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
-	card_root.add_child(cost_label)
+	card_surface.add_child(cost_label)
 
 	var name_label := Label.new()
 	name_label.layout_mode = 0
@@ -245,7 +262,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	name_label.add_theme_font_size_override("font_size", 17)
 	name_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-	card_root.add_child(name_label)
+	card_surface.add_child(name_label)
 
 	var effect_label := Label.new()
 	effect_label.layout_mode = 0
@@ -259,7 +276,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	effect_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	effect_label.add_theme_font_size_override("font_size", 14)
 	effect_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
-	card_root.add_child(effect_label)
+	card_surface.add_child(effect_label)
 
 	var click_button := Button.new()
 	click_button.layout_mode = 1
@@ -288,7 +305,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	click_button.mouse_exited.connect(_on_hand_card_mouse_exited.bind(card_root))
 	click_button.button_down.connect(_on_hand_card_button_down.bind(card, effective_cost))
 	click_button.button_up.connect(_on_hand_card_button_up)
-	card_root.add_child(click_button)
+	card_surface.add_child(click_button)
 
 	if not can_play:
 		card_root.modulate = Color(0.6, 0.6, 0.6, 0.9)
@@ -486,12 +503,21 @@ func _build_card_short_text(card: CardData) -> String:
 
 func _make_card_border_style(card: CardData) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.08)
 	style.border_color = _get_card_type_color(card.type, 1.0)
 	style.border_width_left = 3
 	style.border_width_top = 3
 	style.border_width_right = 3
 	style.border_width_bottom = 3
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	return style
+
+func _make_card_shadow_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.35)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
 	style.corner_radius_bottom_left = 10

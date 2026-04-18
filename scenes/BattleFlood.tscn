@@ -78,6 +78,7 @@ alignment = 1
 
 [node name="PlayerStats" type="Label" parent="Margin/VBox/TopRow" unique_id=426956807]
 layout_mode = 2
+text = "Player HP: 60/60 | Block: 0"
 
 [node name="Spacer" type="Control" parent="Margin/VBox/TopRow" unique_id=1195612811]
 custom_minimum_size = Vector2(1000, 10)
@@ -85,6 +86,7 @@ layout_mode = 2
 
 [node name="EnemyStats" type="Label" parent="Margin/VBox/TopRow" unique_id=2105435137]
 layout_mode = 2
+text = "Enemy HP: 40/40"
 
 [node name="MeterBar" type="TextureProgressBar" parent="Margin/VBox" unique_id=167237957]
 custom_minimum_size = Vector2(0, 50)
@@ -96,6 +98,7 @@ text = "Temperature: 0/10"
 
 [node name="LogLabel" type="RichTextLabel" parent="Margin/VBox" unique_id=797412774]
 layout_mode = 2
+text = "- Battle log preview: aksi kartu dan serangan musuh akan tampil di sini."
 
 [node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=1879194285]
 custom_minimum_size = Vector2(0, 340)
@@ -103,7 +106,7 @@ layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1855964187]
 clip_contents = false
-custom_minimum_size = Vector2(0, 360)
+custom_minimum_size = Vector2(0, 400)
 layout_direction = 3
 layout_mode = 2
 
@@ -148,6 +151,7 @@ offset_bottom = 40.0
 
 [node name="RewardTitle" type="Label" parent="RewardPanel/RewardVbox" unique_id=1129176704]
 layout_mode = 2
+text = "Pilih 1 reward kartu"
 
 [node name="RewardButtons" type="HBoxContainer" parent="RewardPanel" unique_id=1885122269]
 layout_mode = 1
@@ -166,8 +170,8 @@ alignment = 1
 
 [node name="RewardButton" type="Button" parent="RewardPanel/RewardButtons" unique_id=1694742244]
 layout_mode = 2
-text = "OKE"
+text = "Contoh Reward A"
 
 [node name="RewardButton2" type="Button" parent="RewardPanel/RewardButtons" unique_id=261225078]
 layout_mode = 2
-text = "NOT_OK"
+text = "Contoh Reward B"
