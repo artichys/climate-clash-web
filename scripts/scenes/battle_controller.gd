@@ -10,6 +10,9 @@ const HAND_CARD_SIZE := Vector2(240.0, 360.0)
 const HAND_CARD_GAP := 16
 const CARD_OVERLAY_TOP_HEIGHT := 46.0
 const CARD_OVERLAY_BOTTOM_HEIGHT := 118.0
+const CARD_HOVER_SCALE := Vector2(1.08, 1.08)
+const CARD_PREVIEW_SIZE := Vector2(360.0, 540.0)
+const CARD_PREVIEW_OFFSET := Vector2(28.0, -180.0)
 
 var run_state: RunState
 var deck_service: DeckService
@@ -49,6 +52,14 @@ var enemy_mc_base_pos: Vector2 = Vector2.ZERO
 var player_idle_tween: Tween
 var enemy_idle_tween: Tween
 var card_art_cache: Dictionary = {}
+var hand_hover_tweens: Dictionary = {}
+
+var drag_preview_panel: Panel
+var drag_preview_art: TextureRect
+var drag_preview_cost_label: Label
+var drag_preview_name_label: Label
+var drag_preview_effect_label: Label
+var drag_preview_active: bool = false
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -63,6 +74,7 @@ func _ready() -> void:
 	_cache_ui_nodes()
 	UIStyle.apply_to_scene(self)
 	_bind_ui_events()
+	_setup_drag_preview_panel()
 
 	var node := run_state.get_current_node()
 	if node == null or node.enemy_kind == null:
@@ -145,6 +157,12 @@ func _refresh_ui() -> void:
 
 func _refresh_hand_buttons() -> void:
 	hand_hbox.add_theme_constant_override("separation", HAND_CARD_GAP)
+	_hide_drag_preview()
+
+	for tween in hand_hover_tweens.values():
+		if tween is Tween:
+			(tween as Tween).kill()
+	hand_hover_tweens.clear()
 
 	for child in hand_hbox.get_children():
 		child.queue_free()
@@ -158,6 +176,7 @@ func _refresh_hand_buttons() -> void:
 func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int) -> Control:
 	var card_root := Panel.new()
 	card_root.custom_minimum_size = HAND_CARD_SIZE
+	card_root.pivot_offset = HAND_CARD_SIZE * 0.5
 	card_root.add_theme_stylebox_override("panel", _make_card_border_style(card))
 
 	var fallback_bg := ColorRect.new()
@@ -265,6 +284,10 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	var can_play := is_player_turn and (not battle_finished) and (effective_cost <= player_energy)
 	click_button.disabled = not can_play
 	click_button.pressed.connect(_on_hand_card_pressed.bind(hand_index))
+	click_button.mouse_entered.connect(_on_hand_card_mouse_entered.bind(card_root))
+	click_button.mouse_exited.connect(_on_hand_card_mouse_exited.bind(card_root))
+	click_button.button_down.connect(_on_hand_card_button_down.bind(card, effective_cost))
+	click_button.button_up.connect(_on_hand_card_button_up)
 	card_root.add_child(click_button)
 
 	if not can_play:
@@ -274,6 +297,163 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 
 func _on_hand_card_pressed(hand_index: int) -> void:
 	_try_play_card(hand_index)
+
+func _on_hand_card_mouse_entered(card_root: Control) -> void:
+	_set_hand_card_hover(card_root, true)
+
+func _on_hand_card_mouse_exited(card_root: Control) -> void:
+	_set_hand_card_hover(card_root, false)
+
+func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
+	if card_root == null:
+		return
+
+	var key := card_root.get_instance_id()
+	if hand_hover_tweens.has(key):
+		var old_tween: Variant = hand_hover_tweens.get(key)
+		if old_tween is Tween:
+			(old_tween as Tween).kill()
+
+	var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	hand_hover_tweens[key] = tween
+
+	if hovered:
+		card_root.z_index = 40
+		tween.tween_property(card_root, "scale", CARD_HOVER_SCALE, 0.13)
+	else:
+		tween.tween_property(card_root, "scale", Vector2.ONE, 0.11)
+		tween.tween_callback(func() -> void:
+			if card_root != null:
+				card_root.z_index = 0
+		)
+
+func _on_hand_card_button_down(card: CardData, effective_cost: int) -> void:
+	_show_drag_preview(card, effective_cost)
+
+func _on_hand_card_button_up() -> void:
+	_hide_drag_preview()
+
+func _setup_drag_preview_panel() -> void:
+	drag_preview_panel = Panel.new()
+	drag_preview_panel.visible = false
+	drag_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drag_preview_panel.z_index = 240
+	drag_preview_panel.custom_minimum_size = CARD_PREVIEW_SIZE
+	drag_preview_panel.size = CARD_PREVIEW_SIZE
+	drag_preview_panel.add_theme_stylebox_override("panel", _make_preview_border_style(GameEnums.CardType.OFFENSIVE))
+	add_child(drag_preview_panel)
+
+	var fallback_bg := ColorRect.new()
+	fallback_bg.layout_mode = 1
+	fallback_bg.anchors_preset = 15
+	fallback_bg.anchor_right = 1.0
+	fallback_bg.anchor_bottom = 1.0
+	fallback_bg.grow_horizontal = 2
+	fallback_bg.grow_vertical = 2
+	fallback_bg.color = Color(0.08, 0.08, 0.12, 0.95)
+	drag_preview_panel.add_child(fallback_bg)
+
+	drag_preview_art = TextureRect.new()
+	drag_preview_art.layout_mode = 1
+	drag_preview_art.anchors_preset = 15
+	drag_preview_art.anchor_right = 1.0
+	drag_preview_art.anchor_bottom = 1.0
+	drag_preview_art.grow_horizontal = 2
+	drag_preview_art.grow_vertical = 2
+	drag_preview_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	drag_preview_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	drag_preview_panel.add_child(drag_preview_art)
+
+	var top_overlay := ColorRect.new()
+	top_overlay.layout_mode = 0
+	top_overlay.anchor_right = 1.0
+	top_overlay.offset_right = CARD_PREVIEW_SIZE.x
+	top_overlay.offset_bottom = 58.0
+	top_overlay.color = Color(0.0, 0.0, 0.0, 0.58)
+	drag_preview_panel.add_child(top_overlay)
+
+	var bottom_overlay := ColorRect.new()
+	bottom_overlay.layout_mode = 0
+	bottom_overlay.anchor_top = 1.0
+	bottom_overlay.anchor_right = 1.0
+	bottom_overlay.anchor_bottom = 1.0
+	bottom_overlay.offset_top = -172.0
+	bottom_overlay.offset_right = CARD_PREVIEW_SIZE.x
+	bottom_overlay.offset_bottom = CARD_PREVIEW_SIZE.y
+	bottom_overlay.color = Color(0.0, 0.0, 0.0, 0.7)
+	drag_preview_panel.add_child(bottom_overlay)
+
+	drag_preview_cost_label = Label.new()
+	drag_preview_cost_label.layout_mode = 0
+	drag_preview_cost_label.offset_left = 16.0
+	drag_preview_cost_label.offset_top = 10.0
+	drag_preview_cost_label.offset_right = CARD_PREVIEW_SIZE.x - 16.0
+	drag_preview_cost_label.offset_bottom = 44.0
+	drag_preview_cost_label.add_theme_font_size_override("font_size", 28)
+	drag_preview_cost_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
+	drag_preview_panel.add_child(drag_preview_cost_label)
+
+	drag_preview_name_label = Label.new()
+	drag_preview_name_label.layout_mode = 0
+	drag_preview_name_label.offset_left = 16.0
+	drag_preview_name_label.offset_top = CARD_PREVIEW_SIZE.y - 160.0
+	drag_preview_name_label.offset_right = CARD_PREVIEW_SIZE.x - 16.0
+	drag_preview_name_label.offset_bottom = CARD_PREVIEW_SIZE.y - 94.0
+	drag_preview_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	drag_preview_name_label.add_theme_font_size_override("font_size", 25)
+	drag_preview_name_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	drag_preview_panel.add_child(drag_preview_name_label)
+
+	drag_preview_effect_label = Label.new()
+	drag_preview_effect_label.layout_mode = 0
+	drag_preview_effect_label.offset_left = 16.0
+	drag_preview_effect_label.offset_top = CARD_PREVIEW_SIZE.y - 94.0
+	drag_preview_effect_label.offset_right = CARD_PREVIEW_SIZE.x - 16.0
+	drag_preview_effect_label.offset_bottom = CARD_PREVIEW_SIZE.y - 14.0
+	drag_preview_effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	drag_preview_effect_label.add_theme_font_size_override("font_size", 17)
+	drag_preview_effect_label.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
+	drag_preview_panel.add_child(drag_preview_effect_label)
+
+func _show_drag_preview(card: CardData, effective_cost: int) -> void:
+	if drag_preview_panel == null:
+		return
+
+	drag_preview_panel.add_theme_stylebox_override("panel", _make_preview_border_style(card.type))
+	drag_preview_art.texture = _get_card_art(card.id)
+	drag_preview_cost_label.text = "COST %d" % effective_cost
+	drag_preview_name_label.text = card.display_name
+	drag_preview_effect_label.text = _build_card_text(card, effective_cost)
+	drag_preview_panel.visible = true
+	drag_preview_active = true
+	_update_drag_preview_position()
+
+func _hide_drag_preview() -> void:
+	drag_preview_active = false
+	if drag_preview_panel != null:
+		drag_preview_panel.visible = false
+
+func _process(_delta: float) -> void:
+	if drag_preview_active:
+		_update_drag_preview_position()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and (not mouse_event.pressed):
+			_hide_drag_preview()
+
+func _update_drag_preview_position() -> void:
+	if drag_preview_panel == null:
+		return
+
+	var viewport_size := get_viewport_rect().size
+	var pos := get_global_mouse_position() + CARD_PREVIEW_OFFSET
+
+	pos.x = clamp(pos.x, 8.0, viewport_size.x - CARD_PREVIEW_SIZE.x - 8.0)
+	pos.y = clamp(pos.y, 8.0, viewport_size.y - CARD_PREVIEW_SIZE.y - 8.0)
+
+	drag_preview_panel.global_position = pos
 
 func _build_card_short_text(card: CardData) -> String:
 	var lines: Array[String] = []
@@ -316,6 +496,20 @@ func _make_card_border_style(card: CardData) -> StyleBoxFlat:
 	style.corner_radius_top_right = 10
 	style.corner_radius_bottom_left = 10
 	style.corner_radius_bottom_right = 10
+	return style
+
+func _make_preview_border_style(card_type: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	style.border_color = _get_card_type_color(card_type, 1.0)
+	style.border_width_left = 4
+	style.border_width_top = 4
+	style.border_width_right = 4
+	style.border_width_bottom = 4
+	style.corner_radius_top_left = 14
+	style.corner_radius_top_right = 14
+	style.corner_radius_bottom_left = 14
+	style.corner_radius_bottom_right = 14
 	return style
 
 func _get_card_type_color(card_type: int, alpha: float = 1.0) -> Color:
