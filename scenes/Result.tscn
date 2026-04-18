@@ -1,3 +1,43 @@
 [gd_scene format=3 uid="uid://cl7n1j2hddanx"]
 
-[node name="Result" type="Node2D" unique_id=1203642250]
+[node name="Control" type="Control" unique_id=2067784098]
+custom_minimum_size = Vector2(1920, 1080)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=412299043]
+custom_minimum_size = Vector2(1760, 1000)
+layout_mode = 0
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 1840.0
+offset_bottom = 1040.0
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=1185446674]
+layout_mode = 2
+
+[node name="ResultTittle" type="Label" parent="Margin/VBox" unique_id=953387246]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResultDetail" type="Label" parent="Margin/VBox" unique_id=1084042163]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RestartButton" type="Button" parent="Margin/VBox" unique_id=710326111]
+layout_mode = 2
+text = "Restart Run"
+
+[node name="MenuButton" type="Button" parent="Margin/VBox" unique_id=672083135]
+layout_mode = 2
+text = "Main Menu"
