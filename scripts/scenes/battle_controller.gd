@@ -13,6 +13,11 @@ const CARD_OVERLAY_BOTTOM_HEIGHT := 118.0
 const CARD_HOVER_SCALE := Vector2(1.08, 1.08)
 const CARD_PREVIEW_SIZE := Vector2(360.0, 540.0)
 const CARD_PREVIEW_OFFSET := Vector2(28.0, -180.0)
+const HAND_SHADOW_OFFSET := Vector2(6.0, 8.0)
+const HAND_SHADOW_HOVER_OFFSET := Vector2(8.0, 11.0)
+const HAND_SHADOW_ALPHA_NORMAL := 0.88
+const HAND_SHADOW_ALPHA_HOVER := 1.0
+const CARD_PREVIEW_SHADOW_OFFSET := Vector2(10.0, 12.0)
 
 var run_state: RunState
 var deck_service: DeckService
@@ -54,6 +59,7 @@ var enemy_idle_tween: Tween
 var card_art_cache: Dictionary = {}
 var hand_hover_tweens: Dictionary = {}
 
+var drag_preview_shadow_panel: Panel
 var drag_preview_panel: Panel
 var drag_preview_art: TextureRect
 var drag_preview_cost_label: Label
@@ -175,16 +181,16 @@ func _refresh_hand_buttons() -> void:
 
 func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int) -> Control:
 	var card_root := Control.new()
-	card_root.custom_minimum_size = HAND_CARD_SIZE + Vector2(6.0, 8.0)
+	card_root.custom_minimum_size = HAND_CARD_SIZE + HAND_SHADOW_HOVER_OFFSET
 	card_root.pivot_offset = HAND_CARD_SIZE * 0.5
 
 	var shadow_panel := Panel.new()
+	shadow_panel.name = "ShadowPanel"
 	shadow_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shadow_panel.layout_mode = 0
-	shadow_panel.offset_left = 6.0
-	shadow_panel.offset_top = 8.0
-	shadow_panel.offset_right = HAND_CARD_SIZE.x + 6.0
-	shadow_panel.offset_bottom = HAND_CARD_SIZE.y + 8.0
+	shadow_panel.position = HAND_SHADOW_OFFSET
+	shadow_panel.size = HAND_CARD_SIZE
+	shadow_panel.modulate = Color(1.0, 1.0, 1.0, HAND_SHADOW_ALPHA_NORMAL)
 	shadow_panel.add_theme_stylebox_override("panel", _make_card_shadow_style())
 	card_root.add_child(shadow_panel)
 
@@ -325,6 +331,8 @@ func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
 	if card_root == null:
 		return
 
+	var shadow_panel := card_root.get_node_or_null("ShadowPanel") as Panel
+
 	var key := card_root.get_instance_id()
 	if hand_hover_tweens.has(key):
 		var old_tween: Variant = hand_hover_tweens.get(key)
@@ -337,8 +345,14 @@ func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
 	if hovered:
 		card_root.z_index = 40
 		tween.tween_property(card_root, "scale", CARD_HOVER_SCALE, 0.13)
+		if shadow_panel != null:
+			tween.parallel().tween_property(shadow_panel, "position", HAND_SHADOW_HOVER_OFFSET, 0.13)
+			tween.parallel().tween_property(shadow_panel, "modulate:a", HAND_SHADOW_ALPHA_HOVER, 0.13)
 	else:
 		tween.tween_property(card_root, "scale", Vector2.ONE, 0.11)
+		if shadow_panel != null:
+			tween.parallel().tween_property(shadow_panel, "position", HAND_SHADOW_OFFSET, 0.11)
+			tween.parallel().tween_property(shadow_panel, "modulate:a", HAND_SHADOW_ALPHA_NORMAL, 0.11)
 		tween.tween_callback(func() -> void:
 			if card_root != null:
 				card_root.z_index = 0
@@ -351,12 +365,22 @@ func _on_hand_card_button_up() -> void:
 	_hide_drag_preview()
 
 func _setup_drag_preview_panel() -> void:
+	drag_preview_shadow_panel = Panel.new()
+	drag_preview_shadow_panel.visible = false
+	drag_preview_shadow_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drag_preview_shadow_panel.z_index = 239
+	drag_preview_shadow_panel.custom_minimum_size = CARD_PREVIEW_SIZE
+	drag_preview_shadow_panel.size = CARD_PREVIEW_SIZE
+	drag_preview_shadow_panel.add_theme_stylebox_override("panel", _make_preview_shadow_style())
+	add_child(drag_preview_shadow_panel)
+
 	drag_preview_panel = Panel.new()
 	drag_preview_panel.visible = false
 	drag_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	drag_preview_panel.z_index = 240
 	drag_preview_panel.custom_minimum_size = CARD_PREVIEW_SIZE
 	drag_preview_panel.size = CARD_PREVIEW_SIZE
+	drag_preview_panel.clip_contents = true
 	drag_preview_panel.add_theme_stylebox_override("panel", _make_preview_border_style(GameEnums.CardType.OFFENSIVE))
 	add_child(drag_preview_panel)
 
@@ -441,12 +465,16 @@ func _show_drag_preview(card: CardData, effective_cost: int) -> void:
 	drag_preview_cost_label.text = "COST %d" % effective_cost
 	drag_preview_name_label.text = card.display_name
 	drag_preview_effect_label.text = _build_card_text(card, effective_cost)
+	if drag_preview_shadow_panel != null:
+		drag_preview_shadow_panel.visible = true
 	drag_preview_panel.visible = true
 	drag_preview_active = true
 	_update_drag_preview_position()
 
 func _hide_drag_preview() -> void:
 	drag_preview_active = false
+	if drag_preview_shadow_panel != null:
+		drag_preview_shadow_panel.visible = false
 	if drag_preview_panel != null:
 		drag_preview_panel.visible = false
 
@@ -470,6 +498,8 @@ func _update_drag_preview_position() -> void:
 	pos.x = clamp(pos.x, 8.0, viewport_size.x - CARD_PREVIEW_SIZE.x - 8.0)
 	pos.y = clamp(pos.y, 8.0, viewport_size.y - CARD_PREVIEW_SIZE.y - 8.0)
 
+	if drag_preview_shadow_panel != null:
+		drag_preview_shadow_panel.global_position = pos + CARD_PREVIEW_SHADOW_OFFSET
 	drag_preview_panel.global_position = pos
 
 func _build_card_short_text(card: CardData) -> String:
@@ -517,11 +547,20 @@ func _make_card_border_style(card: CardData) -> StyleBoxFlat:
 
 func _make_card_shadow_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.0, 0.0, 0.0, 0.35)
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.38)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
 	style.corner_radius_bottom_left = 10
 	style.corner_radius_bottom_right = 10
+	return style
+
+func _make_preview_shadow_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.42)
+	style.corner_radius_top_left = 14
+	style.corner_radius_top_right = 14
+	style.corner_radius_bottom_left = 14
+	style.corner_radius_bottom_right = 14
 	return style
 
 func _make_preview_border_style(card_type: int) -> StyleBoxFlat:
