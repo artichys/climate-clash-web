@@ -1,0 +1,131 @@
+[gd_scene format=3 uid="uid://unxdqkocc6x"]
+
+[ext_resource type="Texture2D" uid="uid://bob6bn5nhrmm2" path="res://assets/placeholders/backgrounds/boss_bg.png" id="1_1n7qe"]
+
+[node name="BattleTemplate" type="Control" unique_id=90234564]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ArenaBackground" type="TextureRect" parent="." unique_id=679379965]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_1n7qe")
+expand_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=1529091857]
+custom_minimum_size = Vector2(1760, 1000)
+layout_mode = 0
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 1840.0
+offset_bottom = 1040.0
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=437529673]
+layout_mode = 2
+
+[node name="ArenaTitle" type="Label" parent="Margin/VBox" unique_id=2136705519]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Flood Monster Arena"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TopRow" type="HBoxContainer" parent="Margin/VBox" unique_id=923835107]
+layout_mode = 2
+alignment = 1
+
+[node name="PlayerStats" type="Label" parent="Margin/VBox/TopRow" unique_id=426956807]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="Margin/VBox/TopRow" unique_id=1195612811]
+custom_minimum_size = Vector2(1000, 10)
+layout_mode = 2
+
+[node name="EnemyStats" type="Label" parent="Margin/VBox/TopRow" unique_id=2105435137]
+layout_mode = 2
+
+[node name="MeterBar" type="TextureProgressBar" parent="Margin/VBox" unique_id=167237957]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="MeterLabel" type="Label" parent="Margin/VBox" unique_id=400756839]
+layout_mode = 2
+
+[node name="LogLabel" type="RichTextLabel" parent="Margin/VBox" unique_id=797412774]
+layout_mode = 2
+
+[node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1794877593]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="HandHBox" type="HBoxContainer" parent="Margin/VBox/HandScroll" unique_id=1029806446]
+layout_mode = 2
+
+[node name="BottomRow" type="HBoxContainer" parent="Margin/VBox" unique_id=1904169846]
+layout_mode = 2
+alignment = 1
+
+[node name="EnergyLabel" type="Label" parent="Margin/VBox/BottomRow" unique_id=237355456]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="Margin/VBox/BottomRow" unique_id=132198535]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="EndTurnButton" type="Button" parent="Margin/VBox/BottomRow" unique_id=1805559408]
+layout_mode = 2
+text = "End Turn"
+
+[node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -492.0
+offset_top = -223.5
+offset_right = 492.0
+offset_bottom = 223.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RewardVbox" type="VBoxContainer" parent="RewardPanel" unique_id=898455546]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="RewardTitle" type="Label" parent="RewardPanel/RewardVbox" unique_id=1129176704]
+layout_mode = 2
+
+[node name="RewardButtons" type="HBoxContainer" parent="RewardPanel" unique_id=1885122269]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -156.0
+offset_top = -14.0
+offset_right = 156.0
+offset_bottom = 123.75
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="RewardButton" type="Button" parent="RewardPanel/RewardButtons" unique_id=1694742244]
+layout_mode = 2
+text = "OKE"
+
+[node name="RewardButton2" type="Button" parent="RewardPanel/RewardButtons" unique_id=261225078]
+layout_mode = 2
+text = "NOT_OK"
