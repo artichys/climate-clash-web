@@ -1,3 +1,47 @@
 [gd_scene format=3 uid="uid://c8r8oyrxjabf5"]
 
-[node name="Map" type="Node2D" unique_id=1327073536]
+[node name="Map" type="Control" unique_id=141948133]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=1638403529]
+custom_minimum_size = Vector2(1760, 1000)
+layout_mode = 0
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 1840.0
+offset_bottom = 1040.0
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=822230146]
+layout_mode = 2
+
+[node name="TittleLabel" type="Label" parent="Margin/VBox" unique_id=880850849]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="Margin/VBox" unique_id=763182697]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NodeListLabel" type="Label" parent="Margin/VBox" unique_id=1904516211]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="Margin/VBox" unique_id=1534594358]
+layout_mode = 2
+text = "Continue"
+
+[node name="BackButton" type="Button" parent="Margin/VBox" unique_id=1275331021]
+layout_mode = 2
+text = "Back"
