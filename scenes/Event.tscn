@@ -1,3 +1,44 @@
 [gd_scene format=3 uid="uid://j7kfl6x72rcq"]
 
-[node name="Event" type="Node2D" unique_id=1907502331]
+[node name="Event" type="Control" unique_id=1938323979]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=2134440275]
+custom_minimum_size = Vector2(1760, 1000)
+layout_mode = 0
+offset_left = 80.0
+offset_top = 40.0
+offset_right = 1840.0
+offset_bottom = 1040.0
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=1828333160]
+layout_mode = 2
+
+[node name="TittleLabel" type="Label" parent="Margin/VBox" unique_id=505289377]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescLabel" type="Label" parent="Margin/VBox" unique_id=770589549]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Climate Route Map"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HealButton" type="Button" parent="Margin/VBox" unique_id=1054502838]
+layout_mode = 2
+text = "Restore Team (+15 HP)"
+
+[node name="CoolButton" type="Button" parent="Margin/VBox" unique_id=138123648]
+layout_mode = 2
+text = "Cloud Seeding (-3 Temp)"
+
+[node name="DrawButton" type="Button" parent="Margin/VBox" unique_id=1515523713]
+layout_mode = 2
+text = "Logistics Boost (+3 Draw Next Battle)"
