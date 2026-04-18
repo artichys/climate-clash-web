@@ -31,7 +31,7 @@ var meter_bar: TextureProgressBar
 var hand_hbox: HBoxContainer
 var end_turn_button: Button
 
-var reward_panel: PanelContainer
+var reward_panel: Control
 var reward_button_a: Button
 var reward_button_b: Button
 var reward_card_a: CardData = null
@@ -70,16 +70,22 @@ func _cache_ui_nodes() -> void:
 	end_turn_button = get_node("Margin/VBox/BottomRow/EndTurnButton")
 
 	reward_panel = get_node("RewardPanel")
-	reward_button_a = get_node("RewardPanel/RewardVBox/RewardButtons/RewardButtonA")
-	reward_button_b = get_node("RewardPanel/RewardVBox/RewardButtons/RewardButtonB")
+	reward_button_a = get_node_or_null("RewardPanel/RewardVBox/RewardButtons/RewardButtonA")
+	reward_button_b = get_node_or_null("RewardPanel/RewardVBox/RewardButtons/RewardButtonB")
+
+	if reward_button_a == null or reward_button_b == null:
+		reward_button_a = get_node_or_null("RewardPanel/RewardButtons/RewardButton")
+		reward_button_b = get_node_or_null("RewardPanel/RewardButtons/RewardButton2")
 
 	meter_bar.max_value = run_state.temperature_max
 	reward_panel.visible = false
 
 func _bind_ui_events() -> void:
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
-	reward_button_a.pressed.connect(_on_reward_a)
-	reward_button_b.pressed.connect(_on_reward_b)
+	if reward_button_a != null:
+		reward_button_a.pressed.connect(_on_reward_a)
+	if reward_button_b != null:
+		reward_button_b.pressed.connect(_on_reward_b)
 
 func _start_player_turn() -> void:
 	if battle_finished:
@@ -316,6 +322,12 @@ func _handle_battle_win() -> void:
 	_show_reward_panel()
 
 func _show_reward_panel() -> void:
+	if reward_panel == null or reward_button_a == null or reward_button_b == null:
+		_log("UI reward panel tidak lengkap, reward dilewati.")
+		run_state.advance_node()
+		get_tree().change_scene_to_file("res://scenes/Map.tscn")
+		return
+
 	var options := GameDatabase.get_random_reward_options(rng, 2)
 	if options.size() < 2:
 		run_state.advance_node()
