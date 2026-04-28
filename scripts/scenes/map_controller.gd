@@ -3,10 +3,13 @@ extends Control
 var run_state: RunState
 var info_label: Label
 var node_list_label: Label
+var audio_node
 
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
+	audio_node = get_node_or_null("/root/AudioNode")
 	UIStyle.apply_to_scene(self)
+	_play_bgm_menu()
 	info_label = get_node("Margin/VBox/InfoLabel")
 	node_list_label = get_node("Margin/VBox/NodeListLabel")
 
@@ -40,6 +43,7 @@ func _refresh_view() -> void:
 	node_list_label.text = text
 
 func _on_continue_pressed() -> void:
+	_play_sfx("sfx_card_click")
 	var node := run_state.get_current_node()
 	if node == null:
 		if run_state.last_run_message == "":
@@ -61,4 +65,15 @@ func _get_battle_scene_for_node(node: RunNodeData) -> String:
 	return "res://scenes/BattleBoss.tscn"
 
 func _on_back_pressed() -> void:
+	_play_sfx("sfx_card_click")
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+
+func _play_bgm_menu() -> void:
+	if audio_node == null:
+		return
+	audio_node.call("play_bgm", "bgm_menu")
+
+func _play_sfx(sfx_id: String) -> void:
+	if audio_node == null:
+		return
+	audio_node.call("play_sfx", sfx_id)
