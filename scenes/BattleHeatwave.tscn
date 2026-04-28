@@ -2,6 +2,8 @@
 
 [ext_resource type="Texture2D" uid="uid://c7h6ngag6tva2" path="res://assets/placeholders/backgrounds/heatwave_bg.png" id="1_kebui"]
 [ext_resource type="Script" uid="uid://cbrvprmxjsc3a" path="res://scripts/scenes/battle_controller.gd" id="2_v2pka"]
+[ext_resource type="Texture2D" uid="uid://cs0hb3ipcpxyg" path="res://assets/placeholders/characters/mc.png" id="3_o766p"]
+[ext_resource type="Texture2D" uid="uid://cywag26ofgbjh" path="res://assets/placeholders/characters/enemy.png" id="4_dyqa1"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -22,7 +24,7 @@ grow_vertical = 2
 texture = ExtResource("1_kebui")
 expand_mode = 1
 
-[node name="CharacterLayer" type="Control" parent="."]
+[node name="CharacterLayer" type="Control" parent="." unique_id=1765850845]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,21 +33,26 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="PlayerMC" type="TextureRect" parent="CharacterLayer"]
+[node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=1766932189]
+modulate = Color(1.207278, 0.9467823, 0.61823845, 1)
+self_modulate = Color(1.0991465, 0.99189377, 0.92325205, 1)
 layout_mode = 0
-offset_left = 120.0
-offset_top = 380.0
-offset_right = 520.0
-offset_bottom = 980.0
+offset_left = 267.0
+offset_top = 521.4481
+offset_right = 702.0
+offset_bottom = 979.59937
+texture = ExtResource("3_o766p")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="EnemyMC" type="TextureRect" parent="CharacterLayer"]
+[node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=374397511]
+modulate = Color(1.2118225, 0.9705347, 0.70570713, 1)
 layout_mode = 0
-offset_left = 1400.0
-offset_top = 300.0
-offset_right = 1800.0
-offset_bottom = 900.0
+offset_left = 962.0
+offset_top = 135.94464
+offset_right = 1792.0
+offset_bottom = 1027.1172
+texture = ExtResource("4_dyqa1")
 expand_mode = 1
 stretch_mode = 5
 
@@ -63,7 +70,7 @@ layout_mode = 2
 [node name="ArenaTitle" type="Label" parent="Margin/VBox" unique_id=2136705519]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
-text = "Flood Monster Arena"
+text = "Heatwave Monster Arena"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -101,7 +108,7 @@ layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=243771617]
 clip_contents = false
-custom_minimum_size = Vector2(0, 360)
+custom_minimum_size = Vector2(0, 390)
 layout_mode = 2
 
 [node name="HandHBox" type="HBoxContainer" parent="Margin/VBox/HandScroll" unique_id=2029469379]
