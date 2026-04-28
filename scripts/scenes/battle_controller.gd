@@ -18,8 +18,10 @@ const HAND_SHADOW_HOVER_OFFSET := Vector2(8.0, 11.0)
 const HAND_SHADOW_ALPHA_NORMAL := 0.88
 const HAND_SHADOW_ALPHA_HOVER := 1.0
 const CARD_PREVIEW_SHADOW_OFFSET := Vector2(10.0, 12.0)
+const SFX_HIT_PATH := "res://assets/placeholders/audio/sfx_hit.wav"
 
 var run_state: RunState
+var audio_node
 var deck_service: DeckService
 var enemy: EnemyData
 
@@ -66,6 +68,7 @@ var drag_preview_cost_label: Label
 var drag_preview_name_label: Label
 var drag_preview_effect_label: Label
 var drag_preview_active: bool = false
+var sfx_hit_player: AudioStreamPlayer
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -76,11 +79,13 @@ var reward_card_b: CardData = null
 func _ready() -> void:
 	rng.randomize()
 	run_state = get_node("/root/RunStateNode")
+	audio_node = get_node_or_null("/root/AudioNode")
 
 	_cache_ui_nodes()
 	UIStyle.apply_to_scene(self)
 	_bind_ui_events()
 	_setup_drag_preview_panel()
+	_setup_audio()
 
 	var node := run_state.get_current_node()
 	if node == null or node.enemy_kind == null:
@@ -90,6 +95,7 @@ func _ready() -> void:
 	enemy = GameDatabase.get_enemy_by_type(node.enemy_kind)
 	enemy_hp = enemy.max_hp
 	is_boss_battle = node.node_type == GameEnums.NodeType.BOSS
+	_play_combat_bgm()
 	_setup_character_art()
 
 	deck_service = DeckService.new(run_state.deck_card_ids)
@@ -138,6 +144,7 @@ func _start_player_turn() -> void:
 	temporary_cost_reduction_this_turn = 0
 
 	if heal_next_turn > 0:
+		_play_sfx("sfx_heal")
 		run_state.heal_player(heal_next_turn)
 		_log("Efek heal next turn aktif: +%d HP." % heal_next_turn)
 		heal_next_turn = 0
@@ -482,6 +489,43 @@ func _process(_delta: float) -> void:
 	if drag_preview_active:
 		_update_drag_preview_position()
 
+func _play_combat_bgm() -> void:
+	if audio_node == null:
+		return
+	var bgm_id := "bgm_boss" if is_boss_battle else "bgm_battle"
+	audio_node.call("play_bgm", bgm_id)
+
+func _play_sfx(sfx_id: String) -> void:
+	if audio_node == null:
+		return
+	audio_node.call("play_sfx", sfx_id)
+
+func _setup_audio() -> void:
+	if audio_node != null:
+		return
+	sfx_hit_player = get_node_or_null("SfxHitPlayer")
+	if sfx_hit_player == null:
+		sfx_hit_player = AudioStreamPlayer.new()
+		sfx_hit_player.name = "SfxHitPlayer"
+		add_child(sfx_hit_player)
+
+	if not ResourceLoader.exists(SFX_HIT_PATH):
+		return
+
+	var stream := load(SFX_HIT_PATH)
+	if stream is AudioStream:
+		sfx_hit_player.stream = stream as AudioStream
+
+func _play_hit_sfx() -> void:
+	_play_sfx("sfx_hit")
+	if audio_node != null:
+		return
+	if sfx_hit_player == null or sfx_hit_player.stream == null:
+		return
+	if sfx_hit_player.playing:
+		sfx_hit_player.stop()
+	sfx_hit_player.play()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
@@ -628,6 +672,7 @@ func _try_play_card(hand_index: int) -> void:
 		return
 
 	player_energy -= cost
+	_play_sfx("sfx_card_click")
 	_apply_card_effects(played)
 
 	if played.exhaust:
@@ -654,9 +699,11 @@ func _apply_card_effects(card: CardData) -> void:
 		var mult := DamageCalculator.get_element_multiplier(enemy.type, card.element)
 		_play_player_attack_animation()
 		_play_enemy_hit_animation()
+		_play_hit_sfx()
 		_log("Damage ke %s: %d (x%.1f)" % [enemy.display_name, damage, mult])
 
 	if card.heal > 0:
+		_play_sfx("sfx_heal")
 		run_state.heal_player(card.heal)
 		_log("Heal +%d" % card.heal)
 
@@ -691,6 +738,7 @@ func _apply_card_effects(card: CardData) -> void:
 func _on_end_turn_pressed() -> void:
 	if (not is_player_turn) or battle_finished:
 		return
+	_play_sfx("sfx_card_click")
 	_enemy_turn_async()
 
 func _enemy_turn_async() -> void:
@@ -710,6 +758,7 @@ func _enemy_turn_async() -> void:
 	if damage_to_hp > 0:
 		run_state.apply_damage_to_player(damage_to_hp)
 		_play_player_hit_animation()
+		_play_hit_sfx()
 
 	_log("%s menyerang: %d (HP kena: %d)" % [enemy.display_name, attack, damage_to_hp])
 
@@ -802,6 +851,7 @@ func _on_reward_b() -> void:
 		_pick_reward(reward_card_b)
 
 func _pick_reward(card: CardData) -> void:
+	_play_sfx("sfx_card_click")
 	run_state.add_card_to_deck(card.id)
 	run_state.advance_node()
 	get_tree().change_scene_to_file("res://scenes/Map.tscn")
@@ -866,22 +916,22 @@ func _start_idle_animation() -> void:
 	if player_mc != null:
 		if player_idle_tween != null:
 			player_idle_tween.kill()
-		player_idle_tween = create_tween().set_loops()
-		player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		# player_idle_tween = create_tween().set_loops()
+		# player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		# player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	if enemy_mc != null:
 		if enemy_idle_tween != null:
 			enemy_idle_tween.kill()
-		enemy_idle_tween = create_tween().set_loops()
-		enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		# enemy_idle_tween = create_tween().set_loops()
+		# enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		# enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _play_player_attack_animation() -> void:
 	if player_mc == null:
 		return
 	var t := create_tween()
-	t.tween_property(player_mc, "position:x", player_mc_base_pos.x + 48.0, 0.09)
+	t.tween_property(player_mc, "position:x", player_mc_base_pos.x + 600.0, 0.09)
 	t.tween_property(player_mc, "position:x", player_mc_base_pos.x, 0.11)
 
 func _play_enemy_attack_animation() -> void:
