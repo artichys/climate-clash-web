@@ -2,7 +2,9 @@
 
 [ext_resource type="Texture2D" uid="uid://ihsh0tx8bl0v" path="res://assets/placeholders/backgrounds/flood_bg.png.png" id="1_fcveg"]
 [ext_resource type="Script" uid="uid://cbrvprmxjsc3a" path="res://scripts/scenes/battle_controller.gd" id="2_oe4f3"]
+[ext_resource type="Texture2D" uid="uid://cs0hb3ipcpxyg" path="res://assets/placeholders/characters/mc.png" id="3_bivmo"]
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_ecs25"]
+[ext_resource type="Texture2D" uid="uid://bdnb3iclx1rpi" path="res://assets/placeholders/characters/enemy_flood.png" id="4_04wvw"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -34,19 +36,21 @@ mouse_filter = 2
 
 [node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=802190803]
 layout_mode = 0
-offset_left = 120.0
-offset_top = 380.0
-offset_right = 520.0
-offset_bottom = 980.0
+offset_left = 253.0
+offset_top = 382.0
+offset_right = 650.0
+offset_bottom = 982.0
+texture = ExtResource("3_bivmo")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=1575153849]
 layout_mode = 0
-offset_left = 1400.0
-offset_top = 300.0
-offset_right = 1800.0
-offset_bottom = 900.0
+offset_left = 916.0
+offset_top = 58.671875
+offset_right = 1731.0
+offset_bottom = 1019.0
+texture = ExtResource("4_04wvw")
 expand_mode = 1
 stretch_mode = 5
 
