@@ -6,16 +6,18 @@
 [ext_resource type="Texture2D" uid="uid://bmgc8l1h7y8fy" path="res://assets/placeholders/ui/exitButton.png" id="4_826wr"]
 [ext_resource type="Texture2D" uid="uid://cewa5c6nnivu1" path="res://assets/placeholders/ui/settingsButton.png" id="5_7nyg2"]
 [ext_resource type="Texture2D" uid="uid://d3a8jd45klbgw" path="res://assets/placeholders/ui/settingsPopup.png" id="6_2r4gq"]
+[ext_resource type="Texture2D" uid="uid://cm7a405cp52wa" path="res://assets/placeholders/ui/titleBanner.png" id="7_3ay5m"]
+[ext_resource type="FontFile" uid="uid://v77ih07e3tdj" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-Bold.ttf" id="8_8a8k8"]
+[ext_resource type="FontFile" uid="uid://cw2b0rpvhjv60" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-Medium.ttf" id="9_7la6k"]
 
 [sub_resource type="StyleBoxEmpty" id="1"]
 
 [sub_resource type="StyleBoxTexture" id="2"]
-texture = ExtResource("6_2r4gq")
-modulate_color = Color(1, 1, 1, 1)
 content_margin_left = 0.0
-content_margin_right = 0.0
 content_margin_top = 0.0
+content_margin_right = 0.0
 content_margin_bottom = 0.0
+texture = ExtResource("6_2r4gq")
 
 [node name="MainMenu" type="Control" unique_id=1399402748]
 layout_mode = 3
@@ -43,77 +45,86 @@ offset_bottom = 1040.0
 [node name="VBox" type="VBoxContainer" parent="Margin" unique_id=702772657]
 layout_mode = 2
 
-[node name="TittleLabel" type="Label" parent="Margin/VBox" unique_id=1847020777]
-custom_minimum_size = Vector2(0, 100)
-layout_mode = 2
-text = "Climate Clash"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="Control" type="Control" parent="Margin/VBox" unique_id=415949540]
-custom_minimum_size = Vector2(0, 400)
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+
+[node name="TitleBanner" type="TextureRect" parent="Margin/VBox" unique_id=1847020777]
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("7_3ay5m")
+stretch_mode = 4
+
+[node name="Control2" type="Control" parent="Margin/VBox" unique_id=1202181479]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 
 [node name="StartButton" type="Button" parent="Margin/VBox" unique_id=1112952902]
+custom_minimum_size = Vector2(275, 76)
 layout_mode = 2
-custom_minimum_size = Vector2(512, 128)
 theme_override_icons/icon = ExtResource("3_l72w3")
 theme_override_styles/normal = SubResource("1")
-theme_override_styles/hover = SubResource("1")
 theme_override_styles/pressed = SubResource("1")
+theme_override_styles/hover = SubResource("1")
 theme_override_styles/disabled = SubResource("1")
-expand_icon = true
 flat = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="SettingsButton" type="Button" parent="Margin/VBox" unique_id=1908345620]
+custom_minimum_size = Vector2(275, 76)
 layout_mode = 2
-custom_minimum_size = Vector2(512, 128)
 theme_override_icons/icon = ExtResource("5_7nyg2")
 theme_override_styles/normal = SubResource("1")
-theme_override_styles/hover = SubResource("1")
 theme_override_styles/pressed = SubResource("1")
+theme_override_styles/hover = SubResource("1")
 theme_override_styles/disabled = SubResource("1")
-expand_icon = true
 flat = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="ExitButton" type="Button" parent="Margin/VBox" unique_id=1924965700]
+custom_minimum_size = Vector2(275, 76)
 layout_mode = 2
-custom_minimum_size = Vector2(512, 128)
 theme_override_icons/icon = ExtResource("4_826wr")
 theme_override_styles/normal = SubResource("1")
-theme_override_styles/hover = SubResource("1")
 theme_override_styles/pressed = SubResource("1")
+theme_override_styles/hover = SubResource("1")
 theme_override_styles/disabled = SubResource("1")
-expand_icon = true
 flat = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="SettingsPopup" type="PopupPanel" parent="." unique_id=1734892150]
-visible = false
-size = Vector2(600, 480)
-offset = Vector2(660, 300)
+oversampling_override = 1.0
+size = Vector2i(600, 480)
+visible = true
 theme_override_styles/panel = SubResource("2")
 
 [node name="MarginContainer" type="MarginContainer" parent="SettingsPopup" unique_id=1972451002]
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 32
-theme_override_constants/margin_right = 32
 theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 
 [node name="VBox" type="VBoxContainer" parent="SettingsPopup/MarginContainer" unique_id=512826404]
 layout_mode = 2
 
+[node name="Spacer4" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=1400258271]
+custom_minimum_size = Vector2(0, 15.805)
+layout_mode = 2
+
 [node name="TitleLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=138829626]
 layout_mode = 2
-text = "Audio Settings"
+theme_override_fonts/font = ExtResource("8_8a8k8")
+theme_override_font_sizes/font_size = 50
+text = "Settings"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -123,14 +134,13 @@ layout_mode = 2
 
 [node name="BgmLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=1297607858]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("9_7la6k")
+theme_override_font_sizes/font_size = 30
 text = "BGM Volume"
 
 [node name="BgmSlider" type="HSlider" parent="SettingsPopup/MarginContainer/VBox" unique_id=2135180943]
 layout_mode = 2
-min_value = 0.0
-max_value = 100.0
 value = 70.0
-size_flags_horizontal = 3
 
 [node name="Spacer2" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=484641081]
 custom_minimum_size = Vector2(0, 20)
@@ -138,21 +148,20 @@ layout_mode = 2
 
 [node name="SfxLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=1209811040]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("9_7la6k")
+theme_override_font_sizes/font_size = 30
 text = "SFX Volume"
 
 [node name="SfxSlider" type="HSlider" parent="SettingsPopup/MarginContainer/VBox" unique_id=410202338]
 layout_mode = 2
-min_value = 0.0
-max_value = 100.0
-value = 80.0
 size_flags_horizontal = 3
+value = 80.0
 
 [node name="Spacer3" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=1086782542]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 58.22)
 layout_mode = 2
 
 [node name="CloseButton" type="Button" parent="SettingsPopup/MarginContainer/VBox" unique_id=1002014571]
-layout_mode = 2
 custom_minimum_size = Vector2(200, 64)
+layout_mode = 2
 text = "Close"
-horizontal_alignment = 1
