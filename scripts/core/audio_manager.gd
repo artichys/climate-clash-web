@@ -70,6 +70,16 @@ func set_sfx_volume_db(value: float) -> void:
 	if _sfx_player != null:
 		_sfx_player.volume_db = value
 
+func get_bgm_volume_db() -> float:
+	if _bgm_player != null:
+		return _bgm_player.volume_db
+	return -14.0
+
+func get_sfx_volume_db() -> float:
+	if _sfx_player != null:
+		return _sfx_player.volume_db
+	return -8.0
+
 func _get_bgm_stream(track_id: String) -> AudioStream:
 	if _bgm_cache.has(track_id):
 		return _bgm_cache[track_id] as AudioStream

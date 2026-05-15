@@ -1,6 +1,21 @@
 [gd_scene format=3 uid="uid://bdl7lqap7oeh3"]
 
 [ext_resource type="Script" uid="uid://ci8aoy2hm2jpq" path="res://scripts/scenes/main_menu_controller.gd" id="1_p8sj7"]
+[ext_resource type="Texture2D" uid="uid://1nkig3x7crea" path="res://assets/placeholders/ui/backgroundMain.png" id="2_ow34m"]
+[ext_resource type="Texture2D" uid="uid://ih65k2ocuxav" path="res://assets/placeholders/ui/startButton.png" id="3_l72w3"]
+[ext_resource type="Texture2D" uid="uid://bmgc8l1h7y8fy" path="res://assets/placeholders/ui/exitButton.png" id="4_826wr"]
+[ext_resource type="Texture2D" uid="uid://cewa5c6nnivu1" path="res://assets/placeholders/ui/settingsButton.png" id="5_7nyg2"]
+[ext_resource type="Texture2D" uid="uid://d3a8jd45klbgw" path="res://assets/placeholders/ui/settingsPopup.png" id="6_2r4gq"]
+
+[sub_resource type="StyleBoxEmpty" id="1"]
+
+[sub_resource type="StyleBoxTexture" id="2"]
+texture = ExtResource("6_2r4gq")
+modulate_color = Color(1, 1, 1, 1)
+content_margin_left = 0.0
+content_margin_right = 0.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
 
 [node name="MainMenu" type="Control" unique_id=1399402748]
 layout_mode = 3
@@ -10,6 +25,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_p8sj7")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1088591720]
+layout_mode = 0
+offset_right = 1917.0
+offset_bottom = 1079.0
+texture = ExtResource("2_ow34m")
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=1813898804]
 custom_minimum_size = Vector2(1760, 1000)
@@ -29,10 +50,109 @@ text = "Climate Clash"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Control" type="Control" parent="Margin/VBox" unique_id=415949540]
+custom_minimum_size = Vector2(0, 400)
+layout_mode = 2
+
 [node name="StartButton" type="Button" parent="Margin/VBox" unique_id=1112952902]
 layout_mode = 2
-text = "Start"
+custom_minimum_size = Vector2(512, 128)
+theme_override_icons/icon = ExtResource("3_l72w3")
+theme_override_styles/normal = SubResource("1")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("1")
+expand_icon = true
+flat = true
+icon_alignment = 1
+
+[node name="SettingsButton" type="Button" parent="Margin/VBox" unique_id=1908345620]
+layout_mode = 2
+custom_minimum_size = Vector2(512, 128)
+theme_override_icons/icon = ExtResource("5_7nyg2")
+theme_override_styles/normal = SubResource("1")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("1")
+expand_icon = true
+flat = true
+icon_alignment = 1
 
 [node name="ExitButton" type="Button" parent="Margin/VBox" unique_id=1924965700]
 layout_mode = 2
-text = "Exit"
+custom_minimum_size = Vector2(512, 128)
+theme_override_icons/icon = ExtResource("4_826wr")
+theme_override_styles/normal = SubResource("1")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("1")
+expand_icon = true
+flat = true
+icon_alignment = 1
+
+[node name="SettingsPopup" type="PopupPanel" parent="." unique_id=1734892150]
+visible = false
+size = Vector2(600, 480)
+offset = Vector2(660, 300)
+theme_override_styles/panel = SubResource("2")
+
+[node name="MarginContainer" type="MarginContainer" parent="SettingsPopup" unique_id=1972451002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPopup/MarginContainer" unique_id=512826404]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=138829626]
+layout_mode = 2
+text = "Audio Settings"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer1" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=118672504]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="BgmLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=1297607858]
+layout_mode = 2
+text = "BGM Volume"
+
+[node name="BgmSlider" type="HSlider" parent="SettingsPopup/MarginContainer/VBox" unique_id=2135180943]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+value = 70.0
+size_flags_horizontal = 3
+
+[node name="Spacer2" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=484641081]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="SfxLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=1209811040]
+layout_mode = 2
+text = "SFX Volume"
+
+[node name="SfxSlider" type="HSlider" parent="SettingsPopup/MarginContainer/VBox" unique_id=410202338]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+value = 80.0
+size_flags_horizontal = 3
+
+[node name="Spacer3" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=1086782542]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="CloseButton" type="Button" parent="SettingsPopup/MarginContainer/VBox" unique_id=1002014571]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 64)
+text = "Close"
+horizontal_alignment = 1
