@@ -57,7 +57,7 @@ texture = ExtResource("7_3ay5m")
 stretch_mode = 4
 
 [node name="Control2" type="Control" parent="Margin/VBox" unique_id=1202181479]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 
 [node name="StartButton" type="Button" parent="Margin/VBox" unique_id=1112952902]
@@ -72,6 +72,10 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
+[node name="Control3" type="Control" parent="Margin/VBox" unique_id=1530364174]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
 [node name="SettingsButton" type="Button" parent="Margin/VBox" unique_id=1908345620]
 custom_minimum_size = Vector2(275, 76)
 layout_mode = 2
@@ -83,6 +87,10 @@ theme_override_styles/disabled = SubResource("1")
 flat = true
 icon_alignment = 1
 expand_icon = true
+
+[node name="Control4" type="Control" parent="Margin/VBox" unique_id=2106979868]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
 
 [node name="ExitButton" type="Button" parent="Margin/VBox" unique_id=1924965700]
 custom_minimum_size = Vector2(275, 76)
@@ -98,8 +106,7 @@ expand_icon = true
 
 [node name="SettingsPopup" type="PopupPanel" parent="." unique_id=1734892150]
 oversampling_override = 1.0
-size = Vector2i(600, 480)
-visible = false
+size = Vector2i(600, 490)
 theme_override_styles/panel = SubResource("2")
 
 [node name="MarginContainer" type="MarginContainer" parent="SettingsPopup" unique_id=1972451002]
@@ -129,7 +136,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Spacer1" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=118672504]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 25)
 layout_mode = 2
 
 [node name="BgmLabel" type="Label" parent="SettingsPopup/MarginContainer/VBox" unique_id=1297607858]
@@ -158,10 +165,14 @@ size_flags_horizontal = 3
 value = 80.0
 
 [node name="Spacer3" type="Control" parent="SettingsPopup/MarginContainer/VBox" unique_id=1086782542]
-custom_minimum_size = Vector2(0, 58.22)
+custom_minimum_size = Vector2(0, 82.03)
 layout_mode = 2
 
 [node name="CloseButton" type="Button" parent="SettingsPopup/MarginContainer/VBox" unique_id=1002014571]
 custom_minimum_size = Vector2(200, 64)
 layout_mode = 2
-text = "Close"
+theme_override_colors/font_color = Color(0.09542131, 0.18734443, 0.25129598, 1)
+theme_override_fonts/font = ExtResource("8_8a8k8")
+theme_override_font_sizes/font_size = 42
+text = "(X) Close"
+flat = true
