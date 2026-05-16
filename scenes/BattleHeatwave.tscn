@@ -35,14 +35,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=1766932189]
-modulate = Color(1.207278, 0.9467823, 0.61823845, 1)
-self_modulate = Color(1.0991465, 0.99189377, 0.92325205, 1)
+[node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=512110778]
+modulate = Color(0.9961272, 0.848061, 0.7844068, 1)
 layout_mode = 0
-offset_left = 267.0
-offset_top = 521.4481
-offset_right = 702.0
-offset_bottom = 979.59937
+offset_left = 6.0
+offset_top = 467.0
+offset_right = 870.0
+offset_bottom = 1022.0
 texture = ExtResource("3_o766p")
 expand_mode = 1
 stretch_mode = 5

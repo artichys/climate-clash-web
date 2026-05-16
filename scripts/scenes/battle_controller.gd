@@ -19,6 +19,11 @@ const HAND_SHADOW_ALPHA_NORMAL := 0.88
 const HAND_SHADOW_ALPHA_HOVER := 1.0
 const CARD_PREVIEW_SHADOW_OFFSET := Vector2(10.0, 12.0)
 const SFX_HIT_PATH := "res://assets/placeholders/audio/sfx_hit.wav"
+const CHAR_ATTACK_PATH := "res://assets/placeholders/characters/charMCAttack"
+const CHAR_ATTACK_FRAME_COUNT := 17
+const PLAYER_ATTACK_TOTAL_DURATION := 2.0
+const PLAYER_ATTACK_HIT_TIME := 0.8
+const PLAYER_ATTACK_DASH_DISTANCE := 600.0
 
 var run_state: RunState
 var audio_node
@@ -70,6 +75,12 @@ var drag_preview_effect_label: Label
 var drag_preview_active: bool = false
 var sfx_hit_player: AudioStreamPlayer
 
+var _attack_overlay: TextureRect
+var _attack_frames: Array = []
+var _attack_frame_index: int = 0
+var _attack_timer: float = 0.0
+var _attack_overlay_start_x: float = 0.0
+
 var reward_panel: Control
 var reward_button_a: Button
 var reward_button_b: Button
@@ -86,6 +97,7 @@ func _ready() -> void:
 	_bind_ui_events()
 	_setup_drag_preview_panel()
 	_setup_audio()
+	_preload_attack_frames()
 
 	var node := run_state.get_current_node()
 	if node == null or node.enemy_kind == null:
@@ -532,6 +544,68 @@ func _play_hit_sfx() -> void:
 		sfx_hit_player.stop()
 	sfx_hit_player.play()
 
+func _preload_attack_frames() -> void:
+	_attack_frames.clear()
+	for i in range(1, CHAR_ATTACK_FRAME_COUNT + 1):
+		var path := "%s/%d.png" % [CHAR_ATTACK_PATH, i]
+		if ResourceLoader.exists(path):
+			var tex := load(path)
+			if tex is Texture2D:
+				_attack_frames.append(tex)
+
+	_attack_overlay = TextureRect.new()
+	_attack_overlay.name = "PlayerAttackOverlay"
+	_attack_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_attack_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_attack_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_attack_overlay.visible = false
+	if character_layer != null:
+		character_layer.add_child(_attack_overlay)
+	else:
+		add_child(_attack_overlay)
+
+func _play_player_attack_animation() -> void:
+	if player_mc == null:
+		return
+	if _attack_frames.size() == 0:
+		var t := create_tween()
+		t.tween_property(player_mc, "position:x", player_mc_base_pos.x + 600.0, 0.09)
+		t.tween_property(player_mc, "position:x", player_mc_base_pos.x, 0.11)
+		return
+
+	_attack_overlay.texture = _attack_frames[0]
+	_attack_overlay.size = player_mc.size
+	_attack_overlay.expand_mode = player_mc.expand_mode
+	_attack_overlay.stretch_mode = player_mc.stretch_mode
+	_attack_overlay.position = player_mc.position
+	_attack_overlay_start_x = _attack_overlay.position.x
+	_attack_overlay.visible = true
+	_attack_overlay.modulate = Color.WHITE
+	_attack_frame_index = 0
+
+	player_mc.visible = false
+
+	var total_frames := _attack_frames.size()
+	var total_duration := PLAYER_ATTACK_TOTAL_DURATION
+
+	var t := create_tween().set_parallel(true)
+	t.tween_method(_update_attack_frame.bind(total_frames), 0, total_frames, total_duration)
+	t.tween_property(_attack_overlay, "position:x", _attack_overlay_start_x + PLAYER_ATTACK_DASH_DISTANCE, PLAYER_ATTACK_HIT_TIME)
+	t.tween_property(_attack_overlay, "position:x", _attack_overlay_start_x, total_duration - PLAYER_ATTACK_HIT_TIME).set_delay(PLAYER_ATTACK_HIT_TIME)
+	t.tween_callback(_finish_player_attack_animation).set_delay(total_duration)
+
+func _update_attack_frame(progress: float, total: int) -> void:
+	var idx := clampi(int(progress), 0, total - 1)
+	if idx < _attack_frames.size():
+		_attack_overlay.texture = _attack_frames[idx]
+
+func _finish_player_attack_animation() -> void:
+	if player_mc != null:
+		player_mc.visible = true
+		player_mc.position.x = player_mc_base_pos.x
+	if _attack_overlay != null:
+		_attack_overlay.visible = false
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
@@ -686,7 +760,7 @@ func _try_play_card(hand_index: int) -> void:
 	else:
 		deck_service.discard(played)
 
-	if enemy_hp <= 0:
+	if played.damage <= 0 and enemy_hp <= 0:
 		_handle_battle_win()
 		return
 
@@ -701,12 +775,9 @@ func _apply_card_effects(card: CardData) -> void:
 
 	if card.damage > 0:
 		var damage := DamageCalculator.calculate_damage(card, enemy, offensive_buff_this_combat)
-		enemy_hp = maxi(0, enemy_hp - damage)
 		var mult := DamageCalculator.get_element_multiplier(enemy.type, card.element)
 		_play_player_attack_animation()
-		_play_enemy_hit_animation()
-		_play_hit_sfx()
-		_log("Damage ke %s: %d (x%.1f)" % [enemy.display_name, damage, mult])
+		_queue_damage_effect(damage, mult)
 
 	if card.heal > 0:
 		_play_sfx("sfx_heal")
@@ -740,6 +811,24 @@ func _apply_card_effects(card: CardData) -> void:
 	if card.suppress_enemy_meter_gain_turns > 0:
 		suppress_enemy_meter_gain_turns += card.suppress_enemy_meter_gain_turns
 		_log("Kenaikan meter musuh ditahan 1 turn.")
+
+func _queue_damage_effect(damage: int, mult: float) -> void:
+	if battle_finished:
+		return
+
+	var t := create_tween()
+	t.tween_interval(PLAYER_ATTACK_HIT_TIME)
+	t.tween_callback(func() -> void:
+		if battle_finished:
+			return
+		enemy_hp = maxi(0, enemy_hp - damage)
+		_play_enemy_hit_animation()
+		_play_hit_sfx()
+		_log("Damage ke %s: %d (x%.1f)" % [enemy.display_name, damage, mult])
+		_refresh_ui()
+		if enemy_hp <= 0:
+			_handle_battle_win()
+	)
 
 func _on_end_turn_pressed() -> void:
 	if (not is_player_turn) or battle_finished:
@@ -946,13 +1035,6 @@ func _start_idle_animation() -> void:
 		# enemy_idle_tween = create_tween().set_loops()
 		# enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		# enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-func _play_player_attack_animation() -> void:
-	if player_mc == null:
-		return
-	var t := create_tween()
-	t.tween_property(player_mc, "position:x", player_mc_base_pos.x + 600.0, 0.09)
-	t.tween_property(player_mc, "position:x", player_mc_base_pos.x, 0.11)
 
 func _play_enemy_attack_animation() -> void:
 	if enemy_mc == null:

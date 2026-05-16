@@ -570,10 +570,10 @@ mouse_filter = 2
 
 [node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=802190803]
 layout_mode = 0
-offset_left = 253.0
-offset_top = 382.0
-offset_right = 650.0
-offset_bottom = 982.0
+offset_left = 82.0
+offset_top = 361.0
+offset_right = 942.0
+offset_bottom = 954.0
 texture = ExtResource("3_bivmo")
 expand_mode = 1
 stretch_mode = 5
