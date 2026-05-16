@@ -1,7 +1,7 @@
 extends RefCounted
 class_name UIStyle
 
-const FONT_PATH := "res://assets/placeholders/ui/fonts/main_font.ttf"
+const FONT_PATH := "res://assets/placeholders/ui/Pixelify_Sans/PixelifySans-VariableFont_wght.ttf"
 const DEFAULT_FONT_SIZE := 24
 const TITLE_FONT_SIZE := 42
 const CARD_FONT_SIZE := 18
@@ -44,7 +44,7 @@ static func _apply_font_to_control(control: Control, font_size: int) -> void:
 		control.add_theme_font_override("font", font)
 	control.add_theme_font_size_override("font_size", font_size)
 
-static func _get_font() -> Font:
+static func get_font() -> Font:
 	if _cached_font != null:
 		return _cached_font
 
@@ -56,3 +56,6 @@ static func _get_font() -> Font:
 		_cached_font = loaded
 
 	return _cached_font
+
+static func _get_font() -> Font:
+	return get_font()

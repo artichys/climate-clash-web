@@ -259,6 +259,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	cost_label.text = "COST %d" % effective_cost
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cost_label.add_theme_font_override("font", UIStyle.get_font())
 	cost_label.add_theme_font_size_override("font_size", 20)
 	cost_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
 	card_surface.add_child(cost_label)
@@ -273,6 +274,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	name_label.add_theme_font_override("font", UIStyle.get_font())
 	name_label.add_theme_font_size_override("font_size", 17)
 	name_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	card_surface.add_child(name_label)
@@ -287,6 +289,7 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	effect_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	effect_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	effect_label.add_theme_font_override("font", UIStyle.get_font())
 	effect_label.add_theme_font_size_override("font_size", 14)
 	effect_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
 	card_surface.add_child(effect_label)
@@ -437,6 +440,7 @@ func _setup_drag_preview_panel() -> void:
 	drag_preview_cost_label.offset_top = 10.0
 	drag_preview_cost_label.offset_right = CARD_PREVIEW_SIZE.x - 16.0
 	drag_preview_cost_label.offset_bottom = 44.0
+	drag_preview_cost_label.add_theme_font_override("font", UIStyle.get_font())
 	drag_preview_cost_label.add_theme_font_size_override("font_size", 28)
 	drag_preview_cost_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
 	drag_preview_panel.add_child(drag_preview_cost_label)
@@ -448,6 +452,7 @@ func _setup_drag_preview_panel() -> void:
 	drag_preview_name_label.offset_right = CARD_PREVIEW_SIZE.x - 16.0
 	drag_preview_name_label.offset_bottom = CARD_PREVIEW_SIZE.y - 94.0
 	drag_preview_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	drag_preview_name_label.add_theme_font_override("font", UIStyle.get_font())
 	drag_preview_name_label.add_theme_font_size_override("font_size", 25)
 	drag_preview_name_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	drag_preview_panel.add_child(drag_preview_name_label)
@@ -459,6 +464,7 @@ func _setup_drag_preview_panel() -> void:
 	drag_preview_effect_label.offset_right = CARD_PREVIEW_SIZE.x - 16.0
 	drag_preview_effect_label.offset_bottom = CARD_PREVIEW_SIZE.y - 14.0
 	drag_preview_effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	drag_preview_effect_label.add_theme_font_override("font", UIStyle.get_font())
 	drag_preview_effect_label.add_theme_font_size_override("font_size", 17)
 	drag_preview_effect_label.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
 	drag_preview_panel.add_child(drag_preview_effect_label)
