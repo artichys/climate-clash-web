@@ -14,6 +14,8 @@ var last_run_message: String = ""
 
 var pending_extra_draw_next_battle: int = 0
 var deck_card_ids: Array[String] = []
+var pending_cutscene_id: String = ""
+var pending_cutscene_return_scene: String = ""
 
 func _ready() -> void:
 	reset_for_new_run()
@@ -26,6 +28,8 @@ func reset_for_new_run() -> void:
 	last_run_won = false
 	last_run_message = ""
 	deck_card_ids = GameDatabase.starter_deck.duplicate()
+	pending_cutscene_id = ""
+	pending_cutscene_return_scene = ""
 
 func heal_player(amount: int) -> void:
 	current_hp = clamp(current_hp + amount, 0, max_hp)
@@ -61,6 +65,20 @@ func consume_pending_extra_draw() -> int:
 	var v := pending_extra_draw_next_battle
 	pending_extra_draw_next_battle = 0
 	return v
+
+func set_pending_cutscene(cutscene_id: String, return_scene: String) -> void:
+	pending_cutscene_id = cutscene_id
+	pending_cutscene_return_scene = return_scene
+
+func consume_pending_cutscene_id() -> String:
+	var id := pending_cutscene_id
+	pending_cutscene_id = ""
+	return id
+
+func consume_pending_cutscene_return_scene() -> String:
+	var scene := pending_cutscene_return_scene
+	pending_cutscene_return_scene = ""
+	return scene
 
 func mark_run_win(message: String) -> void:
 	last_run_won = true

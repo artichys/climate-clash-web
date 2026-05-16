@@ -99,7 +99,8 @@ func _kill_button_tween(btn: Button) -> void:
 func _on_start_pressed() -> void:
 	_play_sfx("sfx_card_click")
 	run_state.reset_for_new_run()
-	get_tree().change_scene_to_file("res://scenes/Map.tscn")
+	run_state.set_pending_cutscene("intro", "res://scenes/Map.tscn")
+	get_tree().change_scene_to_file("res://scenes/Cutscene.tscn")
 
 func _on_settings_pressed() -> void:
 	_play_sfx("sfx_card_click")

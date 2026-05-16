@@ -6,7 +6,8 @@ const AUDIO_BASE_PATH := "res://assets/placeholders/audio"
 const BGM_CANDIDATES := {
 	"bgm_menu": ["bgm_menu.ogg", "bgm_menu.wav"],
 	"bgm_battle": ["bgm_battle.ogg", "bgm_battle.wav"],
-	"bgm_boss": ["bgm_boss.ogg", "bgm_boss.wav"]
+	"bgm_boss": ["bgm_boss.ogg", "bgm_boss.wav"],
+	"bgm_cutscene": ["cutScenesSound.ogg"]
 }
 
 const SFX_CANDIDATES := {

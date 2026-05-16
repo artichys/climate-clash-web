@@ -822,7 +822,8 @@ func _handle_battle_win() -> void:
 	if is_boss_battle:
 		run_state.mark_run_win("Anda menaklukkan Climate Collapse. Kota selamat.")
 		run_state.advance_node()
-		get_tree().change_scene_to_file("res://scenes/Result.tscn")
+		run_state.set_pending_cutscene("after_boss", "res://scenes/Result.tscn")
+		get_tree().change_scene_to_file("res://scenes/Cutscene.tscn")
 		return
 
 	_show_reward_panel()
@@ -830,14 +831,12 @@ func _handle_battle_win() -> void:
 func _show_reward_panel() -> void:
 	if reward_panel == null or reward_button_a == null or reward_button_b == null:
 		_log("UI reward panel tidak lengkap, reward dilewati.")
-		run_state.advance_node()
-		get_tree().change_scene_to_file("res://scenes/Map.tscn")
+		_go_to_post_battle_scene()
 		return
 
 	var options := GameDatabase.get_random_reward_options(rng, 2)
 	if options.size() < 2:
-		run_state.advance_node()
-		get_tree().change_scene_to_file("res://scenes/Map.tscn")
+		_go_to_post_battle_scene()
 		return
 
 	reward_card_a = options[0]
@@ -859,7 +858,22 @@ func _on_reward_b() -> void:
 func _pick_reward(card: CardData) -> void:
 	_play_sfx("sfx_card_click")
 	run_state.add_card_to_deck(card.id)
+	_go_to_post_battle_scene()
+
+func _go_to_post_battle_scene() -> void:
 	run_state.advance_node()
+	var cutscene_id := ""
+	if enemy != null:
+		if enemy.type == GameEnums.EnemyType.FLOOD:
+			cutscene_id = "after_flood"
+		elif enemy.type == GameEnums.EnemyType.HEATWAVE:
+			cutscene_id = "after_heatwave"
+
+	if cutscene_id != "":
+		run_state.set_pending_cutscene(cutscene_id, "res://scenes/Map.tscn")
+		get_tree().change_scene_to_file("res://scenes/Cutscene.tscn")
+		return
+
 	get_tree().change_scene_to_file("res://scenes/Map.tscn")
 
 func _setup_character_art() -> void:
