@@ -580,10 +580,10 @@ stretch_mode = 5
 
 [node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=1575153849]
 layout_mode = 0
-offset_left = 916.0
-offset_top = 58.671875
-offset_right = 1731.0
-offset_bottom = 1019.0
+offset_left = 626.0
+offset_top = -293.50793
+offset_right = 2081.0
+offset_bottom = 1420.9429
 texture = ExtResource("4_04wvw")
 expand_mode = 1
 stretch_mode = 5

@@ -24,6 +24,10 @@ const CHAR_ATTACK_FRAME_COUNT := 17
 const PLAYER_ATTACK_TOTAL_DURATION := 2.0
 const PLAYER_ATTACK_HIT_TIME := 0.8
 const PLAYER_ATTACK_DASH_DISTANCE := 600.0
+const FLOOD_ATTACK_PATH := "res://assets/placeholders/characters/charFloodAttack"
+const FLOOD_ATTACK_FRAME_COUNT := 18
+const FLOOD_ATTACK_TOTAL_DURATION := 0.8
+const FLOOD_ATTACK_DASH_DISTANCE := 56.0
 
 var run_state: RunState
 var audio_node
@@ -80,6 +84,9 @@ var _attack_frames: Array = []
 var _attack_frame_index: int = 0
 var _attack_timer: float = 0.0
 var _attack_overlay_start_x: float = 0.0
+var _enemy_attack_overlay: TextureRect
+var _enemy_attack_frames: Array = []
+var _enemy_attack_overlay_start_x: float = 0.0
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -109,6 +116,7 @@ func _ready() -> void:
 	is_boss_battle = node.node_type == GameEnums.NodeType.BOSS
 	_play_combat_bgm()
 	_setup_character_art()
+	_preload_enemy_attack_frames()
 
 	deck_service = DeckService.new(run_state.deck_card_ids)
 	draw_bonus_next_turn += run_state.consume_pending_extra_draw()
@@ -848,7 +856,7 @@ func _enemy_turn_async() -> void:
 	var attack := _calculate_enemy_attack_damage()
 	var damage_to_hp := maxi(0, attack - player_block)
 	player_block = maxi(0, player_block - attack)
-	_play_enemy_attack_animation()
+	await _play_enemy_attack_animation()
 
 	if damage_to_hp > 0:
 		run_state.apply_damage_to_player(damage_to_hp)
@@ -976,6 +984,30 @@ func _setup_character_art() -> void:
 	enemy_mc_base_pos = enemy_mc.position
 	_start_idle_animation()
 
+func _preload_enemy_attack_frames() -> void:
+	_enemy_attack_frames.clear()
+	if enemy == null or enemy.type != GameEnums.EnemyType.FLOOD:
+		return
+
+	for i in range(1, FLOOD_ATTACK_FRAME_COUNT + 1):
+		var path := "%s/%d.png" % [FLOOD_ATTACK_PATH, i]
+		if ResourceLoader.exists(path):
+			var tex := load(path)
+			if tex is Texture2D:
+				_enemy_attack_frames.append(tex)
+
+	if _enemy_attack_overlay == null:
+		_enemy_attack_overlay = TextureRect.new()
+		_enemy_attack_overlay.name = "EnemyAttackOverlay"
+		_enemy_attack_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_enemy_attack_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_enemy_attack_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_enemy_attack_overlay.visible = false
+		if character_layer != null:
+			character_layer.add_child(_enemy_attack_overlay)
+		else:
+			add_child(_enemy_attack_overlay)
+
 func _get_enemy_art_candidates() -> Array[String]:
 	if enemy == null:
 		return ["res://assets/placeholders/characters/enemy.png", "res://icon.svg"]
@@ -1039,9 +1071,43 @@ func _start_idle_animation() -> void:
 func _play_enemy_attack_animation() -> void:
 	if enemy_mc == null:
 		return
+
+	if enemy != null and enemy.type == GameEnums.EnemyType.FLOOD and _enemy_attack_frames.size() > 0:
+		_enemy_attack_overlay.texture = _enemy_attack_frames[0]
+		_enemy_attack_overlay.size = enemy_mc.size
+		_enemy_attack_overlay.expand_mode = enemy_mc.expand_mode
+		_enemy_attack_overlay.stretch_mode = enemy_mc.stretch_mode
+		_enemy_attack_overlay.position = enemy_mc.position
+		_enemy_attack_overlay_start_x = _enemy_attack_overlay.position.x
+		_enemy_attack_overlay.visible = true
+		_enemy_attack_overlay.modulate = Color.WHITE
+		enemy_mc.visible = false
+
+		var total_frames := _enemy_attack_frames.size()
+		var t := create_tween().set_parallel(true)
+		t.tween_method(_update_enemy_attack_frame.bind(total_frames), 0, total_frames, FLOOD_ATTACK_TOTAL_DURATION)
+		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x - FLOOD_ATTACK_DASH_DISTANCE, 0.28)
+		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x, FLOOD_ATTACK_TOTAL_DURATION - 0.28).set_delay(0.28)
+		t.tween_callback(_finish_enemy_attack_animation).set_delay(FLOOD_ATTACK_TOTAL_DURATION)
+		await get_tree().create_timer(FLOOD_ATTACK_TOTAL_DURATION).timeout
+		return
+
 	var t := create_tween()
 	t.tween_property(enemy_mc, "position:x", enemy_mc_base_pos.x - 48.0, 0.09)
 	t.tween_property(enemy_mc, "position:x", enemy_mc_base_pos.x, 0.11)
+	await t.finished
+
+func _update_enemy_attack_frame(progress: float, total: int) -> void:
+	var idx := clampi(int(progress), 0, total - 1)
+	if idx < _enemy_attack_frames.size() and _enemy_attack_overlay != null:
+		_enemy_attack_overlay.texture = _enemy_attack_frames[idx]
+
+func _finish_enemy_attack_animation() -> void:
+	if enemy_mc != null:
+		enemy_mc.visible = true
+		enemy_mc.position.x = enemy_mc_base_pos.x
+	if _enemy_attack_overlay != null:
+		_enemy_attack_overlay.visible = false
 
 func _play_enemy_hit_animation() -> void:
 	if enemy_mc == null:
