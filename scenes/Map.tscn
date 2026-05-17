@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://c8r8oyrxjabf5"]
 
-[ext_resource type="Script" path="res://scripts/scenes/map_controller.gd" id="1_ss1we"]
+[ext_resource type="Script" uid="uid://dmf8rkjh4mx24" path="res://scripts/scenes/map_controller.gd" id="1_ss1we"]
+[ext_resource type="Texture2D" uid="uid://c35bogi35uqy2" path="res://assets/placeholders/backgrounds/bgmap1.png" id="2_lajc7"]
 
 [node name="Map" type="Control" unique_id=141948133]
 layout_mode = 3
@@ -8,6 +9,16 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_ss1we")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1436656490]
+layout_mode = 0
+offset_left = -118.52002
+offset_top = -75.0
+offset_right = 2058.6
+offset_bottom = 1162.0
+texture = ExtResource("2_lajc7")
+expand_mode = 2
+stretch_mode = 5
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=1638403529]
 custom_minimum_size = Vector2(1760, 1000)
@@ -37,7 +48,10 @@ vertical_alignment = 1
 [node name="NodeListLabel" type="Label" parent="Margin/VBox" unique_id=1904516211]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
-text = "Node Progress:\n>> Node 1: Battle - FLOOD\n   Node 2: Mini Event - Sanctuary of the Green\n   Node 3: Battle - HEATWAVE"
+text = "Node Progress:
+>> Node 1: Battle - FLOOD
+   Node 2: Mini Event - Sanctuary of the Green
+   Node 3: Battle - HEATWAVE"
 horizontal_alignment = 1
 vertical_alignment = 1
 

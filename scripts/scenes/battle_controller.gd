@@ -21,6 +21,19 @@ const CARD_PREVIEW_SHADOW_OFFSET := Vector2(10.0, 12.0)
 const SFX_HIT_PATH := "res://assets/placeholders/audio/sfx_hit.wav"
 const CHAR_ATTACK_PATH := "res://assets/placeholders/characters/charMCAttack"
 const CHAR_ATTACK_FRAME_COUNT := 17
+const PLAYER_HP_BAR_PATH := "res://assets/placeholders/ui/Bar/playerHP.png"
+const PLAYER_HP_HOLDER_PATH := "res://assets/placeholders/ui/Bar/playerHPHolder.png"
+const FLOOD_HP_BAR_PATH := "res://assets/placeholders/ui/Bar/FloodHP.png"
+const FLOOD_HP_HOLDER_PATH := "res://assets/placeholders/ui/Bar/FloodHPHolder.png"
+const HEATWAVE_HP_BAR_PATH := "res://assets/placeholders/ui/Bar/HeatHP.png"
+const HEATWAVE_HP_HOLDER_PATH := "res://assets/placeholders/ui/Bar/HeatHPHolder.png"
+const BOSS_HP_BAR_PATH := "res://assets/placeholders/ui/Bar/BossHP.png"
+const BOSS_HP_HOLDER_PATH := "res://assets/placeholders/ui/Bar/BossHPHolder.png"
+const TEMP_BAR_PATH := "res://assets/placeholders/ui/Bar/tempBar.png"
+const TEMP_BAR_HOLDER_PATH := "res://assets/placeholders/ui/Bar/tempBarHolder.png"
+const HP_BAR_DISPLAY_SIZE := Vector2(220.0, 42.0)
+const TEMP_BAR_DISPLAY_HEIGHT := 38.0
+const BAR_ANIM_DURATION := 0.22
 const PLAYER_ATTACK_TOTAL_DURATION := 2.0
 const PLAYER_ATTACK_HIT_TIME := 0.8
 const PLAYER_ATTACK_DASH_DISTANCE := 600.0
@@ -66,6 +79,8 @@ var meter_label: Label
 var energy_label: Label
 var log_label: RichTextLabel
 var meter_bar: TextureProgressBar
+var player_hp_bar: TextureProgressBar
+var enemy_hp_bar: TextureProgressBar
 var hand_hbox: HBoxContainer
 var end_turn_button: Button
 var character_layer: Control
@@ -95,6 +110,7 @@ var _attack_overlay_start_x: float = 0.0
 var _enemy_attack_overlay: TextureRect
 var _enemy_attack_frames: Array = []
 var _enemy_attack_overlay_start_x: float = 0.0
+var _bar_tweens: Dictionary = {}
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -121,6 +137,7 @@ func _ready() -> void:
 
 	enemy = GameDatabase.get_enemy_by_type(node.enemy_kind)
 	enemy_hp = enemy.max_hp
+	_setup_bar_textures()
 	is_boss_battle = node.node_type == GameEnums.NodeType.BOSS
 	_play_combat_bgm()
 	_setup_character_art()
@@ -137,9 +154,31 @@ func _cache_ui_nodes() -> void:
 	enemy_stats = get_node("Margin/VBox/TopRow/EnemyStats")
 	meter_bar = get_node("Margin/VBox/MeterBar")
 	meter_label = get_node("Margin/VBox/MeterLabel")
+	energy_label = get_node("Margin/VBox/BottomRow/EnergyLabel")
 	log_label = get_node("Margin/VBox/LogLabel")
 	hand_hbox = get_node("Margin/VBox/HandScroll/HandHBox")
-	energy_label = get_node("Margin/VBox/BottomRow/EnergyLabel")
+	player_hp_bar = get_node_or_null("Margin/VBox/TopRow/PlayerHPBar")
+	enemy_hp_bar = get_node_or_null("Margin/VBox/TopRow/EnemyHPBar")
+	sfx_hit_player = get_node_or_null("SFXHitPlayer")
+	
+	if player_hp_bar == null:
+		player_hp_bar = TextureProgressBar.new()
+		player_hp_bar.name = "PlayerHPBar"
+		player_hp_bar.custom_minimum_size = Vector2(200, 30)
+		var top_row := get_node("Margin/VBox/TopRow")
+		top_row.add_child(player_hp_bar)
+		top_row.move_child(player_hp_bar, 0)
+	
+	if enemy_hp_bar == null:
+		enemy_hp_bar = TextureProgressBar.new()
+		enemy_hp_bar.name = "EnemyHPBar"
+		enemy_hp_bar.custom_minimum_size = Vector2(200, 30)
+		var top_row := get_node("Margin/VBox/TopRow")
+		top_row.add_child(enemy_hp_bar)
+		var enemy_stats_idx := top_row.get_children().find(enemy_stats)
+		if enemy_stats_idx >= 0:
+			top_row.move_child(enemy_hp_bar, enemy_stats_idx)
+	
 	end_turn_button = get_node("Margin/VBox/BottomRow/EndTurnButton")
 	character_layer = get_node_or_null("CharacterLayer")
 	player_mc = get_node_or_null("CharacterLayer/PlayerMC")
@@ -155,6 +194,78 @@ func _cache_ui_nodes() -> void:
 
 	meter_bar.max_value = run_state.temperature_max
 	reward_panel.visible = false
+
+func _setup_bar_textures() -> void:
+	if player_hp_bar != null:
+		_apply_bar_textures(
+			player_hp_bar,
+			PLAYER_HP_BAR_PATH,
+			PLAYER_HP_HOLDER_PATH,
+			TextureProgressBar.FILL_LEFT_TO_RIGHT
+		)
+		player_hp_bar.custom_minimum_size = HP_BAR_DISPLAY_SIZE
+		player_hp_bar.step = 0.01
+		player_hp_bar.max_value = run_state.max_hp
+		player_hp_bar.value = run_state.current_hp
+
+	if enemy_hp_bar != null and enemy != null:
+		var enemy_hp_texture_path := FLOOD_HP_BAR_PATH
+		var enemy_hp_holder_texture_path := FLOOD_HP_HOLDER_PATH
+		if enemy.type == GameEnums.EnemyType.HEATWAVE:
+			enemy_hp_texture_path = HEATWAVE_HP_BAR_PATH
+			enemy_hp_holder_texture_path = HEATWAVE_HP_HOLDER_PATH
+		elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+			enemy_hp_texture_path = BOSS_HP_BAR_PATH
+			enemy_hp_holder_texture_path = BOSS_HP_HOLDER_PATH
+
+		_apply_bar_textures(
+			enemy_hp_bar,
+			enemy_hp_texture_path,
+			enemy_hp_holder_texture_path,
+			TextureProgressBar.FILL_RIGHT_TO_LEFT
+		)
+		enemy_hp_bar.custom_minimum_size = HP_BAR_DISPLAY_SIZE
+		enemy_hp_bar.step = 0.01
+		enemy_hp_bar.max_value = enemy.max_hp
+		enemy_hp_bar.value = enemy_hp
+
+	if meter_bar != null:
+		_apply_bar_textures(
+			meter_bar,
+			TEMP_BAR_PATH,
+			TEMP_BAR_HOLDER_PATH,
+			TextureProgressBar.FILL_LEFT_TO_RIGHT
+		)
+		meter_bar.custom_minimum_size = Vector2(meter_bar.custom_minimum_size.x, TEMP_BAR_DISPLAY_HEIGHT)
+		meter_bar.step = 0.01
+
+func _apply_bar_textures(bar: TextureProgressBar, progress_path: String, holder_path: String, fill_mode: int) -> void:
+	if bar == null:
+		return
+	if ResourceLoader.exists(progress_path):
+		var progress_tex := load(progress_path) as Texture2D
+		bar.texture_progress = progress_tex
+	if ResourceLoader.exists(holder_path):
+		var holder_tex := load(holder_path) as Texture2D
+		bar.texture_under = holder_tex
+	bar.fill_mode = fill_mode
+
+func _animate_bar_to_value(bar: TextureProgressBar, target_value: float) -> void:
+	if bar == null:
+		return
+	var clamped_value := clampf(target_value, bar.min_value, bar.max_value)
+	if is_equal_approx(bar.value, clamped_value):
+		return
+
+	var key := bar.get_instance_id()
+	if _bar_tweens.has(key):
+		var old_tween: Variant = _bar_tweens[key]
+		if old_tween is Tween:
+			(old_tween as Tween).kill()
+
+	var tween := create_tween()
+	_bar_tweens[key] = tween
+	tween.tween_property(bar, "value", clamped_value, BAR_ANIM_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _bind_ui_events() -> void:
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
@@ -187,9 +298,14 @@ func _start_player_turn() -> void:
 
 func _refresh_ui() -> void:
 	player_stats.text = "Player HP: %d/%d | Block: %d" % [run_state.current_hp, run_state.max_hp, player_block]
-	enemy_stats.text = "%s HP: %d/%d" % [enemy.display_name, enemy_hp, enemy.max_hp]
+	if player_hp_bar != null:
+		_animate_bar_to_value(player_hp_bar, run_state.current_hp)
 
-	meter_bar.value = run_state.temperature
+	enemy_stats.text = "%s HP: %d/%d" % [enemy.display_name, enemy_hp, enemy.max_hp]
+	if enemy_hp_bar != null:
+		_animate_bar_to_value(enemy_hp_bar, enemy_hp)
+
+	_animate_bar_to_value(meter_bar, run_state.temperature)
 	meter_label.text = "Temperature: %d/%d" % [run_state.temperature, run_state.temperature_max]
 	energy_label.text = "Energy: %d/3" % player_energy
 
@@ -1114,6 +1230,7 @@ func _play_enemy_attack_animation() -> void:
 		elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
 			total_duration = BOSS_ATTACK_TOTAL_DURATION
 			dash_distance = BOSS_ATTACK_DASH_DISTANCE
+		@warning_ignore("confusable_local_declaration")
 		var t := create_tween().set_parallel(true)
 		t.tween_method(_update_enemy_attack_frame.bind(total_frames), 0, total_frames, total_duration)
 		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x - dash_distance, total_duration * 0.35)

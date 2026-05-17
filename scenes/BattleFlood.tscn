@@ -6,6 +6,9 @@
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_ecs25"]
 [ext_resource type="Texture2D" uid="uid://bdnb3iclx1rpi" path="res://assets/placeholders/characters/enemy_flood.png" id="4_04wvw"]
 [ext_resource type="FontFile" uid="uid://bln4quqfg766w" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-SemiBold.ttf" id="6_04wvw"]
+[ext_resource type="Texture2D" uid="uid://dnn37uciimn31" path="res://assets/placeholders/ui/Bar/playerHP.png" id="7_player_hp"]
+[ext_resource type="Texture2D" uid="uid://ddnkcplw00a2g" path="res://assets/placeholders/ui/Bar/FloodHP.png" id="8_flood_hp"]
+[ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="9_temp_bar"]
 
 [sub_resource type="Image" id="Image_c8g63"]
 data = {
@@ -614,21 +617,39 @@ vertical_alignment = 1
 layout_mode = 2
 alignment = 1
 
+[node name="PlayerHPBar" type="TextureProgressBar" parent="Margin/VBox/TopRow" unique_id=426956808]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+max_value = 60.0
+value = 60.0
+texture_progress = ExtResource("7_player_hp")
+
 [node name="PlayerStats" type="Label" parent="Margin/VBox/TopRow" unique_id=426956807]
 layout_mode = 2
 text = "Player HP: 60/60 | Block: 0"
 
 [node name="Spacer" type="Control" parent="Margin/VBox/TopRow" unique_id=1195612811]
-custom_minimum_size = Vector2(1000, 10)
+custom_minimum_size = Vector2(620, 20.94)
 layout_mode = 2
 
 [node name="EnemyStats" type="Label" parent="Margin/VBox/TopRow" unique_id=2105435137]
+visible = false
 layout_mode = 2
 text = "Enemy HP: 40/40"
+
+[node name="EnemyHPBar" type="TextureProgressBar" parent="Margin/VBox/TopRow" unique_id=2105435138]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+max_value = 40.0
+value = 40.0
+fill_mode = 1
+texture_progress = ExtResource("8_flood_hp")
 
 [node name="MeterBar" type="TextureProgressBar" parent="Margin/VBox" unique_id=167237957]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
+max_value = 10.0
+texture_progress = ExtResource("9_temp_bar")
 
 [node name="MeterLabel" type="Label" parent="Margin/VBox" unique_id=400756839]
 layout_mode = 2
@@ -639,7 +660,7 @@ layout_mode = 2
 text = "- Battle log preview: aksi kartu dan serangan musuh akan tampil di sini."
 
 [node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=1879194285]
-custom_minimum_size = Vector2(0, 340)
+custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1855964187]
