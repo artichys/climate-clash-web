@@ -28,6 +28,10 @@ const FLOOD_ATTACK_PATH := "res://assets/placeholders/characters/charFloodAttack
 const FLOOD_ATTACK_FRAME_COUNT := 18
 const FLOOD_ATTACK_TOTAL_DURATION := 0.8
 const FLOOD_ATTACK_DASH_DISTANCE := 56.0
+const BOSS_ATTACK_PATH := "res://assets/placeholders/characters/charBossAttack"
+const BOSS_ATTACK_FRAME_COUNT := 25
+const BOSS_ATTACK_TOTAL_DURATION := 1.0
+const BOSS_ATTACK_DASH_DISTANCE := 72.0
 
 var run_state: RunState
 var audio_node
@@ -987,10 +991,17 @@ func _setup_character_art() -> void:
 func _preload_enemy_attack_frames() -> void:
 	_enemy_attack_frames.clear()
 	if enemy == null or enemy.type != GameEnums.EnemyType.FLOOD:
-		return
+		if enemy == null or enemy.type != GameEnums.EnemyType.CLIMATE_COLLAPSE:
+			return
 
-	for i in range(1, FLOOD_ATTACK_FRAME_COUNT + 1):
-		var path := "%s/%d.png" % [FLOOD_ATTACK_PATH, i]
+	var attack_path := FLOOD_ATTACK_PATH
+	var frame_count := FLOOD_ATTACK_FRAME_COUNT
+	if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		attack_path = BOSS_ATTACK_PATH
+		frame_count = BOSS_ATTACK_FRAME_COUNT
+
+	for i in range(1, frame_count + 1):
+		var path := "%s/%d.png" % [attack_path, i]
 		if ResourceLoader.exists(path):
 			var tex := load(path)
 			if tex is Texture2D:
@@ -1072,7 +1083,7 @@ func _play_enemy_attack_animation() -> void:
 	if enemy_mc == null:
 		return
 
-	if enemy != null and enemy.type == GameEnums.EnemyType.FLOOD and _enemy_attack_frames.size() > 0:
+	if enemy != null and (enemy.type == GameEnums.EnemyType.FLOOD or enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE) and _enemy_attack_frames.size() > 0:
 		_enemy_attack_overlay.texture = _enemy_attack_frames[0]
 		_enemy_attack_overlay.size = enemy_mc.size
 		_enemy_attack_overlay.expand_mode = enemy_mc.expand_mode
@@ -1084,12 +1095,17 @@ func _play_enemy_attack_animation() -> void:
 		enemy_mc.visible = false
 
 		var total_frames := _enemy_attack_frames.size()
+		var total_duration := FLOOD_ATTACK_TOTAL_DURATION
+		var dash_distance := FLOOD_ATTACK_DASH_DISTANCE
+		if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+			total_duration = BOSS_ATTACK_TOTAL_DURATION
+			dash_distance = BOSS_ATTACK_DASH_DISTANCE
 		var t := create_tween().set_parallel(true)
-		t.tween_method(_update_enemy_attack_frame.bind(total_frames), 0, total_frames, FLOOD_ATTACK_TOTAL_DURATION)
-		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x - FLOOD_ATTACK_DASH_DISTANCE, 0.28)
-		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x, FLOOD_ATTACK_TOTAL_DURATION - 0.28).set_delay(0.28)
-		t.tween_callback(_finish_enemy_attack_animation).set_delay(FLOOD_ATTACK_TOTAL_DURATION)
-		await get_tree().create_timer(FLOOD_ATTACK_TOTAL_DURATION).timeout
+		t.tween_method(_update_enemy_attack_frame.bind(total_frames), 0, total_frames, total_duration)
+		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x - dash_distance, total_duration * 0.35)
+		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x, total_duration - (total_duration * 0.35)).set_delay(total_duration * 0.35)
+		t.tween_callback(_finish_enemy_attack_animation).set_delay(total_duration)
+		await get_tree().create_timer(total_duration).timeout
 		return
 
 	var t := create_tween()
