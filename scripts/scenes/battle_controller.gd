@@ -211,18 +211,20 @@ func _setup_bar_textures() -> void:
 	if enemy_hp_bar != null and enemy != null:
 		var enemy_hp_texture_path := FLOOD_HP_BAR_PATH
 		var enemy_hp_holder_texture_path := FLOOD_HP_HOLDER_PATH
+		var enemy_hp_fill_mode := TextureProgressBar.FILL_RIGHT_TO_LEFT
 		if enemy.type == GameEnums.EnemyType.HEATWAVE:
 			enemy_hp_texture_path = HEATWAVE_HP_BAR_PATH
 			enemy_hp_holder_texture_path = HEATWAVE_HP_HOLDER_PATH
 		elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
 			enemy_hp_texture_path = BOSS_HP_BAR_PATH
 			enemy_hp_holder_texture_path = BOSS_HP_HOLDER_PATH
+			enemy_hp_fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
 
 		_apply_bar_textures(
 			enemy_hp_bar,
 			enemy_hp_texture_path,
 			enemy_hp_holder_texture_path,
-			TextureProgressBar.FILL_RIGHT_TO_LEFT
+			enemy_hp_fill_mode
 		)
 		enemy_hp_bar.custom_minimum_size = HP_BAR_DISPLAY_SIZE
 		enemy_hp_bar.step = 0.01

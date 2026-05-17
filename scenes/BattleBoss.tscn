@@ -6,6 +6,12 @@
 [ext_resource type="Texture2D" uid="uid://ce5m2717sph5b" path="res://assets/placeholders/characters/enemy_boss.png" id="4_xl0tw"]
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="5_v0r0h"]
 [ext_resource type="FontFile" uid="uid://bln4quqfg766w" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-SemiBold.ttf" id="6_ig6pl"]
+[ext_resource type="Texture2D" uid="uid://dnn37uciimn31" path="res://assets/placeholders/ui/Bar/playerHP.png" id="7_player_hp"]
+[ext_resource type="Texture2D" uid="uid://yfw3vhcfamgd" path="res://assets/placeholders/ui/Bar/playerHPHolder.png" id="8_player_hp_holder"]
+[ext_resource type="Texture2D" uid="uid://b5em1c2o8bwsn" path="res://assets/placeholders/ui/Bar/BossHP.png" id="9_hmn54"]
+[ext_resource type="Texture2D" uid="uid://cpt6ij55n5g8t" path="res://assets/placeholders/ui/Bar/BossHPHolder.png" id="10_boss_hp_holder"]
+[ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="11_temp_bar"]
+[ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="12_temp_bar_holder"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -81,21 +87,46 @@ vertical_alignment = 1
 layout_mode = 2
 alignment = 1
 
+[node name="PlayerHPBar" type="TextureProgressBar" parent="Margin/VBox/TopRow" unique_id=426956808]
+custom_minimum_size = Vector2(220, 42)
+layout_mode = 2
+max_value = 60.0
+step = 0.01
+value = 60.0
+texture_under = ExtResource("8_player_hp_holder")
+texture_progress = ExtResource("7_player_hp")
+
 [node name="PlayerStats" type="Label" parent="Margin/VBox/TopRow" unique_id=426956807]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("6_ig6pl")
+theme_override_font_sizes/font_size = 16
 text = "Player HP: 60/60 | Block: 0"
 
 [node name="Spacer" type="Control" parent="Margin/VBox/TopRow" unique_id=1195612811]
-custom_minimum_size = Vector2(1000, 10)
+custom_minimum_size = Vector2(715, 0)
 layout_mode = 2
 
 [node name="EnemyStats" type="Label" parent="Margin/VBox/TopRow" unique_id=2105435137]
+visible = false
 layout_mode = 2
 text = "Enemy HP: 80/80"
 
-[node name="MeterBar" type="TextureProgressBar" parent="Margin/VBox" unique_id=167237957]
-custom_minimum_size = Vector2(0, 50)
+[node name="EnemyHPBar" type="TextureProgressBar" parent="Margin/VBox/TopRow" unique_id=2105435138]
+custom_minimum_size = Vector2(220, 42)
 layout_mode = 2
+max_value = 80.0
+step = 0.01
+value = 80.0
+texture_under = ExtResource("10_boss_hp_holder")
+texture_progress = ExtResource("9_hmn54")
+
+[node name="MeterBar" type="TextureProgressBar" parent="Margin/VBox" unique_id=167237957]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+max_value = 10.0
+step = 0.01
+texture_under = ExtResource("12_temp_bar_holder")
+texture_progress = ExtResource("11_temp_bar")
 
 [node name="MeterLabel" type="Label" parent="Margin/VBox" unique_id=400756839]
 layout_mode = 2
@@ -106,7 +137,7 @@ layout_mode = 2
 text = "- Battle log preview: aksi kartu dan serangan musuh akan tampil di sini."
 
 [node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=2126326050]
-custom_minimum_size = Vector2(0, 340)
+custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1794877593]

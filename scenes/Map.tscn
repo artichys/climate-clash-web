@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" uid="uid://dmf8rkjh4mx24" path="res://scripts/scenes/map_controller.gd" id="1_ss1we"]
 [ext_resource type="Texture2D" uid="uid://c35bogi35uqy2" path="res://assets/placeholders/backgrounds/bgmap1.png" id="2_lajc7"]
+[ext_resource type="Texture2D" uid="uid://ch3jqdmqrxq2o" path="res://assets/placeholders/ui/nodeMap/1.png" id="3_node_stage_1"]
+[ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_yyirk"]
+[ext_resource type="FontFile" uid="uid://v77ih07e3tdj" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-Bold.ttf" id="4_41ykk"]
 
 [node name="Map" type="Control" unique_id=141948133]
 layout_mode = 3
@@ -32,8 +35,14 @@ offset_bottom = 1040.0
 layout_mode = 2
 
 [node name="TittleLabel" type="Label" parent="Margin/VBox" unique_id=880850849]
-custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.8627451, 0.16078432, 0.05882353, 1)
+theme_override_colors/font_shadow_color = Color(0.23921569, 0.24313726, 0.25882354, 1)
+theme_override_colors/font_outline_color = Color(0.23529412, 0.24313726, 0.25490198, 1)
+theme_override_constants/shadow_offset_x = 8
+theme_override_constants/shadow_offset_y = 3
+theme_override_fonts/font = ExtResource("3_yyirk")
+theme_override_font_sizes/font_size = 68
 text = "Climate Route Map"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -41,9 +50,22 @@ vertical_alignment = 1
 [node name="InfoLabel" type="Label" parent="Margin/VBox" unique_id=763182697]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.5137255, 0.8156863, 0.76862746, 1)
+theme_override_colors/font_shadow_color = Color(0.23529412, 0.24313726, 0.25490198, 1)
+theme_override_constants/shadow_offset_x = 6
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("4_41ykk")
+theme_override_font_sizes/font_size = 36
 text = "HP: 60/60 | Temp: 0/10 | Deck: 8"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="NodeMapTexture" type="TextureRect" parent="Margin/VBox" unique_id=2019910937]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+texture = ExtResource("3_node_stage_1")
+expand_mode = 5
+stretch_mode = 4
 
 [node name="NodeListLabel" type="Label" parent="Margin/VBox" unique_id=1904516211]
 custom_minimum_size = Vector2(0, 100)
