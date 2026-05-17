@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://cbrvprmxjsc3a" path="res://scripts/scenes/battle_controller.gd" id="2_oe4f3"]
 [ext_resource type="Texture2D" uid="uid://cs0hb3ipcpxyg" path="res://assets/placeholders/characters/mc.png" id="3_bivmo"]
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_ecs25"]
-[ext_resource type="Texture2D" uid="uid://bdnb3iclx1rpi" path="res://assets/placeholders/characters/enemy_flood.png" id="4_04wvw"]
+[ext_resource type="Texture2D" uid="uid://bta1fe3yqbadn" path="res://assets/placeholders/characters/charFloodIdle/1.png" id="4_ctey0"]
 [ext_resource type="FontFile" uid="uid://bln4quqfg766w" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-SemiBold.ttf" id="6_04wvw"]
 [ext_resource type="Texture2D" uid="uid://yfw3vhcfamgd" path="res://assets/placeholders/ui/Bar/playerHPHolder.png" id="6_fnmkl"]
 [ext_resource type="Texture2D" uid="uid://dnn37uciimn31" path="res://assets/placeholders/ui/Bar/playerHP.png" id="7_player_hp"]
@@ -586,11 +586,11 @@ stretch_mode = 5
 
 [node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=1575153849]
 layout_mode = 0
-offset_left = 626.0
-offset_top = -293.50793
-offset_right = 2081.0
-offset_bottom = 1420.9429
-texture = ExtResource("4_04wvw")
+offset_left = 460.0
+offset_top = -113.0
+offset_right = 2120.0
+offset_bottom = 1196.0
+texture = ExtResource("4_ctey0")
 expand_mode = 1
 stretch_mode = 5
 

@@ -43,9 +43,9 @@ mouse_filter = 2
 
 [node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=677997247]
 layout_mode = 0
-offset_left = 19.0
-offset_top = 444.0
-offset_right = 808.0
+offset_left = 5.0
+offset_top = 407.0
+offset_right = 848.46454
 offset_bottom = 980.0
 texture = ExtResource("3_p86go")
 expand_mode = 1
@@ -53,8 +53,8 @@ stretch_mode = 5
 
 [node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=1042514178]
 layout_mode = 0
-offset_left = 972.0
-offset_top = 56.087463
+offset_left = 898.0
+offset_top = -28.827515
 offset_right = 1810.0
 offset_bottom = 1017.6925
 texture = ExtResource("4_xl0tw")

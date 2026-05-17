@@ -49,6 +49,11 @@ const BOSS_ATTACK_PATH := "res://assets/placeholders/characters/charBossAttack"
 const BOSS_ATTACK_FRAME_COUNT := 25
 const BOSS_ATTACK_TOTAL_DURATION := 1.0
 const BOSS_ATTACK_DASH_DISTANCE := 72.0
+const PLAYER_IDLE_PATH := "res://assets/placeholders/characters/charMCIdle"
+const FLOOD_IDLE_PATH := "res://assets/placeholders/characters/charFloodIdle"
+const HEATWAVE_IDLE_PATH := "res://assets/placeholders/characters/charHeatwaveIdle"
+const BOSS_IDLE_PATH := "res://assets/placeholders/characters/charBossIdle"
+const IDLE_LOOP_DURATION := 2.0
 
 var run_state: RunState
 var audio_node
@@ -111,6 +116,12 @@ var _enemy_attack_overlay: TextureRect
 var _enemy_attack_frames: Array = []
 var _enemy_attack_overlay_start_x: float = 0.0
 var _bar_tweens: Dictionary = {}
+var _player_idle_frames: Array = []
+var _enemy_idle_frames: Array = []
+var _player_idle_frame_index: int = 0
+var _enemy_idle_frame_index: int = 0
+var _player_idle_timer: float = 0.0
+var _enemy_idle_timer: float = 0.0
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -637,9 +648,10 @@ func _hide_drag_preview() -> void:
 	if drag_preview_panel != null:
 		drag_preview_panel.visible = false
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if drag_preview_active:
 		_update_drag_preview_position()
+	_update_idle_animation(delta)
 
 func _play_combat_bgm() -> void:
 	if audio_node == null:
@@ -1105,10 +1117,37 @@ func _setup_character_art() -> void:
 
 	player_mc.texture = _load_first_texture(PLAYER_ART_CANDIDATES)
 	enemy_mc.texture = _load_first_texture(_get_enemy_art_candidates())
+	_preload_idle_frames()
 
 	player_mc_base_pos = player_mc.position
 	enemy_mc_base_pos = enemy_mc.position
 	_start_idle_animation()
+
+func _preload_idle_frames() -> void:
+	_player_idle_frames = _load_sequence_frames(PLAYER_IDLE_PATH)
+	_enemy_idle_frames.clear()
+	if enemy == null:
+		return
+
+	var enemy_idle_path := FLOOD_IDLE_PATH
+	if enemy.type == GameEnums.EnemyType.HEATWAVE:
+		enemy_idle_path = HEATWAVE_IDLE_PATH
+	elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		enemy_idle_path = BOSS_IDLE_PATH
+	_enemy_idle_frames = _load_sequence_frames(enemy_idle_path)
+
+func _load_sequence_frames(base_path: String) -> Array:
+	var frames: Array = []
+	var idx := 1
+	while true:
+		var path := "%s/%d.png" % [base_path, idx]
+		if not ResourceLoader.exists(path):
+			break
+		var tex := load(path)
+		if tex is Texture2D:
+			frames.append(tex)
+		idx += 1
+	return frames
 
 func _preload_enemy_attack_frames() -> void:
 	_enemy_attack_frames.clear()
@@ -1197,16 +1236,39 @@ func _start_idle_animation() -> void:
 	if player_mc != null:
 		if player_idle_tween != null:
 			player_idle_tween.kill()
-		# player_idle_tween = create_tween().set_loops()
-		# player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		# player_idle_tween.tween_property(player_mc, "position:y", player_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_player_idle_timer = 0.0
+		_player_idle_frame_index = 0
+		player_mc.position = player_mc_base_pos
+		if _player_idle_frames.size() > 0:
+			player_mc.texture = _player_idle_frames[0]
 
 	if enemy_mc != null:
 		if enemy_idle_tween != null:
 			enemy_idle_tween.kill()
-		# enemy_idle_tween = create_tween().set_loops()
-		# enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y - 8.0, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		# enemy_idle_tween.tween_property(enemy_mc, "position:y", enemy_mc_base_pos.y, 0.75).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_enemy_idle_timer = 0.0
+		_enemy_idle_frame_index = 0
+		enemy_mc.position = enemy_mc_base_pos
+		if _enemy_idle_frames.size() > 0:
+			enemy_mc.texture = _enemy_idle_frames[0]
+
+func _update_idle_animation(delta: float) -> void:
+	if player_mc != null and player_mc.visible and _player_idle_frames.size() > 1:
+		var player_interval := IDLE_LOOP_DURATION / float(_player_idle_frames.size())
+		_player_idle_timer += delta
+		while _player_idle_timer >= player_interval:
+			_player_idle_timer -= player_interval
+			_player_idle_frame_index = (_player_idle_frame_index + 1) % _player_idle_frames.size()
+			player_mc.texture = _player_idle_frames[_player_idle_frame_index]
+			player_mc.position = player_mc_base_pos
+
+	if enemy_mc != null and enemy_mc.visible and _enemy_idle_frames.size() > 1:
+		var enemy_interval := IDLE_LOOP_DURATION / float(_enemy_idle_frames.size())
+		_enemy_idle_timer += delta
+		while _enemy_idle_timer >= enemy_interval:
+			_enemy_idle_timer -= enemy_interval
+			_enemy_idle_frame_index = (_enemy_idle_frame_index + 1) % _enemy_idle_frames.size()
+			enemy_mc.texture = _enemy_idle_frames[_enemy_idle_frame_index]
+			enemy_mc.position = enemy_mc_base_pos
 
 func _play_enemy_attack_animation() -> void:
 	if enemy_mc == null:

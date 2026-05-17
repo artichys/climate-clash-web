@@ -55,8 +55,8 @@ stretch_mode = 5
 [node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=374397511]
 modulate = Color(1.2118225, 0.9705347, 0.70570713, 1)
 layout_mode = 0
-offset_left = 962.0
-offset_top = 135.94464
+offset_left = 917.0
+offset_top = 87.62805
 offset_right = 1792.0
 offset_bottom = 1027.1172
 texture = ExtResource("4_dyqa1")
