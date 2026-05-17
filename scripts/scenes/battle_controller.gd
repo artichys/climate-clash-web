@@ -28,6 +28,10 @@ const FLOOD_ATTACK_PATH := "res://assets/placeholders/characters/charFloodAttack
 const FLOOD_ATTACK_FRAME_COUNT := 18
 const FLOOD_ATTACK_TOTAL_DURATION := 0.8
 const FLOOD_ATTACK_DASH_DISTANCE := 56.0
+const HEATWAVE_ATTACK_PATH := "res://assets/placeholders/characters/charHeatwaveAttack"
+const HEATWAVE_ATTACK_FRAME_COUNT := 9
+const HEATWAVE_ATTACK_TOTAL_DURATION := 0.9
+const HEATWAVE_ATTACK_DASH_DISTANCE := 48.0
 const BOSS_ATTACK_PATH := "res://assets/placeholders/characters/charBossAttack"
 const BOSS_ATTACK_FRAME_COUNT := 25
 const BOSS_ATTACK_TOTAL_DURATION := 1.0
@@ -990,15 +994,22 @@ func _setup_character_art() -> void:
 
 func _preload_enemy_attack_frames() -> void:
 	_enemy_attack_frames.clear()
-	if enemy == null or enemy.type != GameEnums.EnemyType.FLOOD:
-		if enemy == null or enemy.type != GameEnums.EnemyType.CLIMATE_COLLAPSE:
-			return
+	if enemy == null:
+		return
 
-	var attack_path := FLOOD_ATTACK_PATH
-	var frame_count := FLOOD_ATTACK_FRAME_COUNT
-	if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+	var attack_path := ""
+	var frame_count := 0
+	if enemy.type == GameEnums.EnemyType.FLOOD:
+		attack_path = FLOOD_ATTACK_PATH
+		frame_count = FLOOD_ATTACK_FRAME_COUNT
+	elif enemy.type == GameEnums.EnemyType.HEATWAVE:
+		attack_path = HEATWAVE_ATTACK_PATH
+		frame_count = HEATWAVE_ATTACK_FRAME_COUNT
+	elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
 		attack_path = BOSS_ATTACK_PATH
 		frame_count = BOSS_ATTACK_FRAME_COUNT
+	else:
+		return
 
 	for i in range(1, frame_count + 1):
 		var path := "%s/%d.png" % [attack_path, i]
@@ -1083,7 +1094,7 @@ func _play_enemy_attack_animation() -> void:
 	if enemy_mc == null:
 		return
 
-	if enemy != null and (enemy.type == GameEnums.EnemyType.FLOOD or enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE) and _enemy_attack_frames.size() > 0:
+	if enemy != null and (enemy.type == GameEnums.EnemyType.FLOOD or enemy.type == GameEnums.EnemyType.HEATWAVE or enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE) and _enemy_attack_frames.size() > 0:
 		_enemy_attack_overlay.texture = _enemy_attack_frames[0]
 		_enemy_attack_overlay.size = enemy_mc.size
 		_enemy_attack_overlay.expand_mode = enemy_mc.expand_mode
@@ -1097,7 +1108,10 @@ func _play_enemy_attack_animation() -> void:
 		var total_frames := _enemy_attack_frames.size()
 		var total_duration := FLOOD_ATTACK_TOTAL_DURATION
 		var dash_distance := FLOOD_ATTACK_DASH_DISTANCE
-		if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		if enemy.type == GameEnums.EnemyType.HEATWAVE:
+			total_duration = HEATWAVE_ATTACK_TOTAL_DURATION
+			dash_distance = HEATWAVE_ATTACK_DASH_DISTANCE
+		elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
 			total_duration = BOSS_ATTACK_TOTAL_DURATION
 			dash_distance = BOSS_ATTACK_DASH_DISTANCE
 		var t := create_tween().set_parallel(true)
