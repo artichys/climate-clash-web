@@ -54,6 +54,10 @@ const FLOOD_IDLE_PATH := "res://assets/placeholders/characters/charFloodIdle"
 const HEATWAVE_IDLE_PATH := "res://assets/placeholders/characters/charHeatwaveIdle"
 const BOSS_IDLE_PATH := "res://assets/placeholders/characters/charBossIdle"
 const IDLE_LOOP_DURATION := 2.0
+const PLAYER_DODGE_PATH := "res://assets/placeholders/characters/charMCDodge"
+const PLAYER_HEAL_UP_PATH := "res://assets/placeholders/characters/charMCHealUp"
+const PLAYER_DODGE_DURATION := 0.55
+const PLAYER_HEAL_UP_DURATION := 0.7
 
 var run_state: RunState
 var audio_node
@@ -112,6 +116,11 @@ var _attack_frames: Array = []
 var _attack_frame_index: int = 0
 var _attack_timer: float = 0.0
 var _attack_overlay_start_x: float = 0.0
+var _player_fx_overlay: TextureRect
+var _player_fx_frames: Array = []
+var _player_dodge_frames: Array = []
+var _player_heal_up_frames: Array = []
+var _player_fx_tween: Tween
 var _enemy_attack_overlay: TextureRect
 var _enemy_attack_frames: Array = []
 var _enemy_attack_overlay_start_x: float = 0.0
@@ -298,6 +307,7 @@ func _start_player_turn() -> void:
 	if heal_next_turn > 0:
 		_play_sfx("sfx_heal")
 		run_state.heal_player(heal_next_turn)
+		_play_player_heal_animation()
 		_log("Efek heal next turn aktif: +%d HP." % heal_next_turn)
 		heal_next_turn = 0
 
@@ -710,6 +720,20 @@ func _preload_attack_frames() -> void:
 	else:
 		add_child(_attack_overlay)
 
+	_player_dodge_frames = _load_sequence_frames(PLAYER_DODGE_PATH)
+	_player_heal_up_frames = _load_sequence_frames(PLAYER_HEAL_UP_PATH)
+	if _player_fx_overlay == null:
+		_player_fx_overlay = TextureRect.new()
+		_player_fx_overlay.name = "PlayerFXOverlay"
+		_player_fx_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_player_fx_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_player_fx_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_player_fx_overlay.visible = false
+		if character_layer != null:
+			character_layer.add_child(_player_fx_overlay)
+		else:
+			add_child(_player_fx_overlay)
+
 func _play_player_attack_animation() -> void:
 	if player_mc == null:
 		return
@@ -751,6 +775,52 @@ func _finish_player_attack_animation() -> void:
 		player_mc.position.x = player_mc_base_pos.x
 	if _attack_overlay != null:
 		_attack_overlay.visible = false
+
+func _play_player_heal_animation() -> void:
+	_play_player_fx_animation(_player_heal_up_frames, PLAYER_HEAL_UP_DURATION)
+
+func _play_player_dodge_animation() -> void:
+	_play_player_fx_animation(_player_dodge_frames, PLAYER_DODGE_DURATION)
+
+func _play_player_fx_animation(frames: Array, duration: float) -> void:
+	if player_mc == null:
+		return
+	if _attack_overlay != null and _attack_overlay.visible:
+		return
+	if _player_fx_overlay == null or frames.size() == 0:
+		return
+
+	if _player_fx_tween != null:
+		_player_fx_tween.kill()
+
+	_player_fx_frames = frames
+	_player_fx_overlay.texture = _player_fx_frames[0]
+	_player_fx_overlay.size = player_mc.size
+	_player_fx_overlay.scale = player_mc.scale
+	_player_fx_overlay.pivot_offset = player_mc.pivot_offset
+	_player_fx_overlay.expand_mode = player_mc.expand_mode
+	_player_fx_overlay.stretch_mode = player_mc.stretch_mode
+	_player_fx_overlay.position = player_mc.position
+	_player_fx_overlay.visible = true
+	_player_fx_overlay.modulate = Color.WHITE
+	player_mc.visible = false
+
+	var total_frames := _player_fx_frames.size()
+	_player_fx_tween = create_tween()
+	_player_fx_tween.tween_method(_update_player_fx_frame.bind(total_frames), 0, total_frames, duration)
+	_player_fx_tween.tween_callback(_finish_player_fx_animation)
+
+func _update_player_fx_frame(progress: float, total: int) -> void:
+	var idx := clampi(int(progress), 0, total - 1)
+	if idx < _player_fx_frames.size() and _player_fx_overlay != null:
+		_player_fx_overlay.texture = _player_fx_frames[idx]
+
+func _finish_player_fx_animation() -> void:
+	if player_mc != null:
+		player_mc.visible = true
+		player_mc.position = player_mc_base_pos
+	if _player_fx_overlay != null:
+		_player_fx_overlay.visible = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -928,6 +998,7 @@ func _apply_card_effects(card: CardData) -> void:
 	if card.heal > 0:
 		_play_sfx("sfx_heal")
 		run_state.heal_player(card.heal)
+		_play_player_heal_animation()
 		_log("Heal +%d" % card.heal)
 
 	if card.meter_delta != 0:
@@ -1000,6 +1071,8 @@ func _enemy_turn_async() -> void:
 		run_state.apply_damage_to_player(damage_to_hp)
 		_play_player_hit_animation()
 		_play_hit_sfx()
+	elif attack > 0:
+		_play_player_dodge_animation()
 
 	_log("%s menyerang: %d (HP kena: %d)" % [enemy.display_name, attack, damage_to_hp])
 

@@ -7,11 +7,13 @@
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="5_a3hbc"]
 [ext_resource type="FontFile" uid="uid://bln4quqfg766w" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-SemiBold.ttf" id="6_p548r"]
 [ext_resource type="Texture2D" uid="uid://dnn37uciimn31" path="res://assets/placeholders/ui/Bar/playerHP.png" id="7_player_hp"]
+[ext_resource type="FontFile" uid="uid://v77ih07e3tdj" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-Bold.ttf" id="8_7cuw0"]
 [ext_resource type="Texture2D" uid="uid://yfw3vhcfamgd" path="res://assets/placeholders/ui/Bar/playerHPHolder.png" id="8_player_hp_holder"]
 [ext_resource type="Texture2D" uid="uid://ddiwsfgykmc8" path="res://assets/placeholders/ui/Bar/HeatHP.png" id="9_heat_hp"]
 [ext_resource type="Texture2D" uid="uid://htefl45w4t0" path="res://assets/placeholders/ui/Bar/HeatHPHolder.png" id="10_heat_hp_holder"]
 [ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="11_temp_bar"]
 [ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="12_temp_bar_holder"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/ui/endTurn.png" id="13_end_turn"]
 
 [node name="BattleTemplate2" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -100,6 +102,8 @@ texture_progress = ExtResource("7_player_hp")
 
 [node name="PlayerStats" type="Label" parent="Margin/VBox/TopRow" unique_id=426956807]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("8_7cuw0")
+theme_override_font_sizes/font_size = 16
 text = "Player HP: 60/60 | Block: 0"
 
 [node name="Spacer" type="Control" parent="Margin/VBox/TopRow" unique_id=1195612811]
@@ -140,7 +144,7 @@ layout_mode = 2
 text = "- Battle log preview: aksi kartu dan serangan musuh akan tampil di sini."
 
 [node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=2011122972]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 270)
 layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=243771617]
@@ -167,9 +171,10 @@ layout_mode = 2
 
 [node name="EndTurnButton" type="Button" parent="Margin/VBox/BottomRow" unique_id=1805559408]
 layout_mode = 2
+icon = ExtResource("13_end_turn")
 theme_override_fonts/font = ExtResource("6_p548r")
 theme_override_font_sizes/font_size = 20
-text = "End Turn"
+text = ""
 
 [node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
 visible = false

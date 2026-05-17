@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://ddnkcplw00a2g" path="res://assets/placeholders/ui/Bar/FloodHP.png" id="8_flood_hp"]
 [ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="9_temp_bar"]
 [ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="10_s4itw"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/ui/endTurn.png" id="11_end_turn"]
 
 [sub_resource type="Image" id="Image_c8g63"]
 data = {
@@ -586,9 +587,9 @@ stretch_mode = 5
 
 [node name="EnemyMC" type="TextureRect" parent="CharacterLayer" unique_id=1575153849]
 layout_mode = 0
-offset_left = 460.0
+offset_left = 479.0
 offset_top = -113.0
-offset_right = 2120.0
+offset_right = 2139.0
 offset_bottom = 1196.0
 texture = ExtResource("4_ctey0")
 expand_mode = 1
@@ -668,7 +669,7 @@ layout_mode = 2
 text = "- Battle log preview: aksi kartu dan serangan musuh akan tampil di sini."
 
 [node name="PushDownHand" type="Control" parent="Margin/VBox" unique_id=1879194285]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 270)
 layout_mode = 2
 
 [node name="HandScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=1855964187]
@@ -696,9 +697,10 @@ layout_mode = 2
 
 [node name="EndTurnButton" type="Button" parent="Margin/VBox/BottomRow" unique_id=1805559408]
 layout_mode = 2
+icon = ExtResource("11_end_turn")
 theme_override_fonts/font = ExtResource("6_04wvw")
 theme_override_font_sizes/font_size = 20
-text = "End Turn"
+text = ""
 
 [node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
 visible = false
