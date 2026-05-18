@@ -245,7 +245,7 @@ func _setup_bar_textures() -> void:
 		elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
 			enemy_hp_texture_path = BOSS_HP_BAR_PATH
 			enemy_hp_holder_texture_path = BOSS_HP_HOLDER_PATH
-			enemy_hp_fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+			enemy_hp_fill_mode = TextureProgressBar.FILL_RIGHT_TO_LEFT
 
 		_apply_bar_textures(
 			enemy_hp_bar,
@@ -329,10 +329,12 @@ func _start_player_turn() -> void:
 func _refresh_ui() -> void:
 	player_stats.text = "Player HP: %d/%d | Block: %d" % [run_state.current_hp, run_state.max_hp, player_block]
 	if player_hp_bar != null:
+		player_hp_bar.max_value = run_state.max_hp
 		_animate_bar_to_value(player_hp_bar, run_state.current_hp)
 
 	enemy_stats.text = "%s HP: %d/%d" % [enemy.display_name, enemy_hp, enemy.max_hp]
 	if enemy_hp_bar != null:
+		enemy_hp_bar.max_value = enemy.max_hp
 		_animate_bar_to_value(enemy_hp_bar, enemy_hp)
 
 	_animate_bar_to_value(meter_bar, run_state.temperature)
