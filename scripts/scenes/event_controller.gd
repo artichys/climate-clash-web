@@ -9,9 +9,22 @@ func _ready() -> void:
 	UIStyle.apply_to_scene(self)
 	_play_bgm_menu()
 
-	get_node("Margin/VBox/HealButton").pressed.connect(_on_heal)
-	get_node("Margin/VBox/CoolButton").pressed.connect(_on_cool)
-	get_node("Margin/VBox/DrawButton").pressed.connect(_on_draw)
+	var heal_button := get_node_or_null("Margin/VBox/ButtonsRow/HealButton") as Button
+	if heal_button == null:
+		heal_button = get_node_or_null("Margin/VBox/HealButton") as Button
+	var cool_button := get_node_or_null("Margin/VBox/ButtonsRow/CoolButton") as Button
+	if cool_button == null:
+		cool_button = get_node_or_null("Margin/VBox/CoolButton") as Button
+	var draw_button := get_node_or_null("Margin/VBox/ButtonsRow/DrawButton") as Button
+	if draw_button == null:
+		draw_button = get_node_or_null("Margin/VBox/DrawButton") as Button
+
+	if heal_button != null:
+		heal_button.pressed.connect(_on_heal)
+	if cool_button != null:
+		cool_button.pressed.connect(_on_cool)
+	if draw_button != null:
+		draw_button.pressed.connect(_on_draw)
 
 func _on_heal() -> void:
 	_play_sfx("sfx_heal")

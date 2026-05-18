@@ -53,6 +53,10 @@ const PLAYER_IDLE_PATH := "res://assets/placeholders/characters/charMCIdle"
 const FLOOD_IDLE_PATH := "res://assets/placeholders/characters/charFloodIdle"
 const HEATWAVE_IDLE_PATH := "res://assets/placeholders/characters/charHeatwaveIdle"
 const BOSS_IDLE_PATH := "res://assets/placeholders/characters/charBossIdle"
+const PLAYER_IDLE_FRAME_START := 1
+const PLAYER_IDLE_FRAME_END := 36
+const FLOOD_IDLE_FRAME_START := 1
+const FLOOD_IDLE_FRAME_END := 33
 const IDLE_LOOP_DURATION := 2.0
 const PLAYER_DODGE_PATH := "res://assets/placeholders/characters/charMCDodge"
 const PLAYER_HEAL_UP_PATH := "res://assets/placeholders/characters/charMCHealUp"
@@ -1197,7 +1201,7 @@ func _setup_character_art() -> void:
 	_start_idle_animation()
 
 func _preload_idle_frames() -> void:
-	_player_idle_frames = _load_sequence_frames(PLAYER_IDLE_PATH)
+	_player_idle_frames = _load_mc_idle_frames()
 	_enemy_idle_frames.clear()
 	if enemy == null:
 		return
@@ -1207,7 +1211,32 @@ func _preload_idle_frames() -> void:
 		enemy_idle_path = HEATWAVE_IDLE_PATH
 	elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
 		enemy_idle_path = BOSS_IDLE_PATH
-	_enemy_idle_frames = _load_sequence_frames(enemy_idle_path)
+	if enemy.type == GameEnums.EnemyType.FLOOD:
+		_enemy_idle_frames = _load_flood_idle_frames()
+	else:
+		_enemy_idle_frames = _load_sequence_frames(enemy_idle_path)
+
+func _load_mc_idle_frames() -> Array:
+	var frames: Array = []
+	for idx in range(PLAYER_IDLE_FRAME_START, PLAYER_IDLE_FRAME_END + 1):
+		var path := "%s/%d.png" % [PLAYER_IDLE_PATH, idx]
+		if not ResourceLoader.exists(path):
+			continue
+		var tex := load(path)
+		if tex is Texture2D:
+			frames.append(tex)
+	return frames
+
+func _load_flood_idle_frames() -> Array:
+	var frames: Array = []
+	for idx in range(FLOOD_IDLE_FRAME_START, FLOOD_IDLE_FRAME_END + 1):
+		var path := "%s/%d.png" % [FLOOD_IDLE_PATH, idx]
+		if not ResourceLoader.exists(path):
+			continue
+		var tex := load(path)
+		if tex is Texture2D:
+			frames.append(tex)
+	return frames
 
 func _load_sequence_frames(base_path: String) -> Array:
 	var frames: Array = []

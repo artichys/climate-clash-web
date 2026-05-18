@@ -2,8 +2,8 @@
 
 [ext_resource type="Texture2D" uid="uid://ihsh0tx8bl0v" path="res://assets/placeholders/backgrounds/flood_bg.png.png" id="1_fcveg"]
 [ext_resource type="Script" uid="uid://cbrvprmxjsc3a" path="res://scripts/scenes/battle_controller.gd" id="2_oe4f3"]
-[ext_resource type="Texture2D" uid="uid://cs0hb3ipcpxyg" path="res://assets/placeholders/characters/mc.png" id="3_bivmo"]
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_ecs25"]
+[ext_resource type="Texture2D" uid="uid://dw6mr84107nel" path="res://assets/placeholders/characters/charMCIdle/1.png" id="3_fnmkl"]
 [ext_resource type="Texture2D" uid="uid://bta1fe3yqbadn" path="res://assets/placeholders/characters/charFloodIdle/1.png" id="4_ctey0"]
 [ext_resource type="FontFile" uid="uid://bln4quqfg766w" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-SemiBold.ttf" id="6_04wvw"]
 [ext_resource type="Texture2D" uid="uid://yfw3vhcfamgd" path="res://assets/placeholders/ui/Bar/playerHPHolder.png" id="6_fnmkl"]
@@ -12,7 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://ddnkcplw00a2g" path="res://assets/placeholders/ui/Bar/FloodHP.png" id="8_flood_hp"]
 [ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="9_temp_bar"]
 [ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="10_s4itw"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/ui/endTurn.png" id="11_end_turn"]
+[ext_resource type="Texture2D" uid="uid://bktfwh7aek4fl" path="res://assets/placeholders/ui/endTurn.png" id="11_end_turn"]
 
 [sub_resource type="Image" id="Image_c8g63"]
 data = {
@@ -577,11 +577,11 @@ mouse_filter = 2
 
 [node name="PlayerMC" type="TextureRect" parent="CharacterLayer" unique_id=802190803]
 layout_mode = 0
-offset_left = 82.0
-offset_top = 361.0
-offset_right = 942.0
-offset_bottom = 954.0
-texture = ExtResource("3_bivmo")
+offset_left = 129.0
+offset_top = 394.0
+offset_right = 894.7335
+offset_bottom = 922.0
+texture = ExtResource("3_fnmkl")
 expand_mode = 1
 stretch_mode = 5
 
@@ -697,10 +697,9 @@ layout_mode = 2
 
 [node name="EndTurnButton" type="Button" parent="Margin/VBox/BottomRow" unique_id=1805559408]
 layout_mode = 2
-icon = ExtResource("11_end_turn")
 theme_override_fonts/font = ExtResource("6_04wvw")
 theme_override_font_sizes/font_size = 20
-text = ""
+icon = ExtResource("11_end_turn")
 
 [node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
 visible = false
