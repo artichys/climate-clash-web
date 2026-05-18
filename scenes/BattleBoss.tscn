@@ -13,8 +13,6 @@
 [ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="11_temp_bar"]
 [ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="12_temp_bar_holder"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/ui/endTurn.png" id="13_end_turn"]
-[ext_resource type="Texture2D" uid="uid://bpyhse4eheaas" path="res://assets/placeholders/ui/pauseButton.png" id="14_pause_button"]
-[ext_resource type="Texture2D" uid="uid://caiwvir7imc4h" path="res://assets/placeholders/ui/panelDark.png" id="15_panel_dark"]
 
 [node name="BattleTemplate" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -223,70 +221,3 @@ custom_minimum_size = Vector2(220, 320)
 layout_mode = 2
 expand_icon = true
 text = ""
-
-[node name="PauseButton" type="Button" parent="." unique_id=970996502]
-layout_mode = 0
-offset_left = 1774.0
-offset_top = 32.0
-offset_right = 1862.0
-offset_bottom = 120.0
-icon = ExtResource("14_pause_button")
-expand_icon = true
-flat = true
-
-[node name="PausePopup" type="Control" parent="." unique_id=477508848]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 0
-
-[node name="Background" type="TextureRect" parent="PausePopup" unique_id=291276366]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -310.0
-offset_top = -180.0
-offset_right = 310.0
-offset_bottom = 180.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("15_panel_dark")
-expand_mode = 1
-stretch_mode = 6
-
-[node name="PauseVBox" type="VBoxContainer" parent="PausePopup" unique_id=446193807]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -88.0
-offset_right = 190.0
-offset_bottom = 88.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 24
-alignment = 1
-
-[node name="ResumeButton" type="Button" parent="PausePopup/PauseVBox" unique_id=713332793]
-custom_minimum_size = Vector2(360, 62)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("6_ig6pl")
-theme_override_font_sizes/font_size = 24
-text = "Resume"
-
-[node name="QuitButton" type="Button" parent="PausePopup/PauseVBox" unique_id=1464284362]
-custom_minimum_size = Vector2(360, 62)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("6_ig6pl")
-theme_override_font_sizes/font_size = 24
-text = "Back to Map"

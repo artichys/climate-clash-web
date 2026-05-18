@@ -35,8 +35,13 @@ const HP_BAR_DISPLAY_SIZE := Vector2(220.0, 42.0)
 const TEMP_BAR_DISPLAY_HEIGHT := 38.0
 const BAR_ANIM_DURATION := 0.22
 const PLAYER_ATTACK_TOTAL_DURATION := 2.0
-const PLAYER_ATTACK_HIT_TIME := 0.8
-const PLAYER_ATTACK_DASH_DISTANCE := 600.0
+const PLAYER_ATTACK_HIT_TIME := 1.35
+const PLAYER_WATER_PROJECTILE_PATH := "res://assets/placeholders/characters/charMCProjectileWater"
+const PLAYER_BIO_PROJECTILE_PATH := "res://assets/placeholders/characters/charMCProjectileBio"
+const PLAYER_THERMAL_PROJECTILE_PATH := "res://assets/placeholders/characters/charMCProjectileThermal"
+const PLAYER_PROJECTILE_DELAY := 0.25
+const PLAYER_PROJECTILE_DURATION := PLAYER_ATTACK_HIT_TIME - PLAYER_PROJECTILE_DELAY
+const PLAYER_PROJECTILE_SIZE := Vector2(1400.0, 1400.0)
 const FLOOD_ATTACK_PATH := "res://assets/placeholders/characters/charFloodAttack"
 const FLOOD_ATTACK_FRAME_COUNT := 18
 const FLOOD_ATTACK_TOTAL_DURATION := 0.8
@@ -45,10 +50,13 @@ const HEATWAVE_ATTACK_PATH := "res://assets/placeholders/characters/charHeatwave
 const HEATWAVE_ATTACK_FRAME_COUNT := 9
 const HEATWAVE_ATTACK_TOTAL_DURATION := 0.9
 const HEATWAVE_ATTACK_DASH_DISTANCE := 48.0
+const HEATWAVE_PROJECTILE_PATH := "res://assets/placeholders/characters/charHeatwaveProjectile"
 const BOSS_ATTACK_PATH := "res://assets/placeholders/characters/charBossAttack"
 const BOSS_ATTACK_FRAME_COUNT := 25
 const BOSS_ATTACK_TOTAL_DURATION := 1.0
 const BOSS_ATTACK_DASH_DISTANCE := 72.0
+const BOSS_PROJECTILE_PATH := "res://assets/placeholders/characters/charBossProjectile"
+const ENEMY_PROJECTILE_SIZE := Vector2(980.0, 980.0)
 const PLAYER_IDLE_PATH := "res://assets/placeholders/characters/charMCIdle"
 const FLOOD_IDLE_PATH := "res://assets/placeholders/characters/charFloodIdle"
 const HEATWAVE_IDLE_PATH := "res://assets/placeholders/characters/charHeatwaveIdle"
@@ -63,11 +71,6 @@ const PLAYER_HEAL_UP_PATH := "res://assets/placeholders/characters/charMCHealUp"
 const PLAYER_DODGE_DURATION := 0.55
 const PLAYER_HEAL_UP_DURATION := 0.7
 const BATTLE_INTRO_DURATION := 0.65
-const PAUSE_BUTTON_PRESS_DURATION := 0.08
-const PAUSE_POPUP_ANIM_DURATION := 0.14
-const PAUSE_BUTTON_PRESS_SCALE := Vector2(0.92, 0.92)
-const PAUSE_POPUP_OPEN_SCALE := Vector2(1.0, 1.0)
-const PAUSE_POPUP_CLOSED_SCALE := Vector2(0.94, 0.94)
 
 var run_state: RunState
 var audio_node
@@ -125,7 +128,10 @@ var _attack_overlay: TextureRect
 var _attack_frames: Array = []
 var _attack_frame_index: int = 0
 var _attack_timer: float = 0.0
-var _attack_overlay_start_x: float = 0.0
+var _projectile_overlay: TextureRect
+var _projectile_frames: Array = []
+var _projectile_frame_index: int = 0
+var _player_projectile_frame_cache: Dictionary = {}
 var _player_fx_overlay: TextureRect
 var _player_fx_frames: Array = []
 var _player_dodge_frames: Array = []
@@ -134,6 +140,9 @@ var _player_fx_tween: Tween
 var _enemy_attack_overlay: TextureRect
 var _enemy_attack_frames: Array = []
 var _enemy_attack_overlay_start_x: float = 0.0
+var _enemy_projectile_overlay: TextureRect
+var _enemy_projectile_frames: Array = []
+var _enemy_projectile_frame_index: int = 0
 var _bar_tweens: Dictionary = {}
 var _player_idle_frames: Array = []
 var _enemy_idle_frames: Array = []
@@ -142,18 +151,14 @@ var _enemy_idle_frame_index: int = 0
 var _player_idle_timer: float = 0.0
 var _enemy_idle_timer: float = 0.0
 var _battle_intro_playing: bool = false
-var _preview_card_id: String = ""
+var _loading_overlay: ColorRect
+var _loading_label: Label
 
 var reward_panel: Control
 var reward_button_a: Button
 var reward_button_b: Button
 var reward_card_a: CardData = null
 var reward_card_b: CardData = null
-var pause_button: Button
-var pause_popup: Control
-var pause_resume_button: Button
-var pause_quit_button: Button
-var _pause_popup_tween: Tween
 
 func _ready() -> void:
 	rng.randomize()
@@ -162,6 +167,9 @@ func _ready() -> void:
 
 	_cache_ui_nodes()
 	UIStyle.apply_to_scene(self)
+	_setup_loading_overlay()
+	_show_loading_overlay()
+	await get_tree().process_frame
 	_bind_ui_events()
 	_setup_drag_preview_panel()
 	_setup_audio()
@@ -179,6 +187,9 @@ func _ready() -> void:
 	_play_combat_bgm()
 	_setup_character_art()
 	_preload_enemy_attack_frames()
+	await _preload_battle_animation_frames()
+	await get_tree().process_frame
+	_hide_loading_overlay()
 	await _play_battle_intro_animation()
 
 	deck_service = DeckService.new(run_state.deck_card_ids)
@@ -221,35 +232,56 @@ func _cache_ui_nodes() -> void:
 	character_layer = get_node_or_null("CharacterLayer")
 	player_mc = get_node_or_null("CharacterLayer/PlayerMC")
 	enemy_mc = get_node_or_null("CharacterLayer/EnemyMC")
+	var margin := get_node_or_null("Margin")
+	if character_layer != null:
+		character_layer.z_index = 0
+	if margin != null:
+		margin.z_index = 100
 
 	reward_panel = get_node("RewardPanel")
 	reward_button_a = get_node_or_null("RewardPanel/RewardVBox/RewardButtons/RewardButtonA")
 	reward_button_b = get_node_or_null("RewardPanel/RewardVBox/RewardButtons/RewardButtonB")
+	if reward_panel != null:
+		reward_panel.z_index = 1000
 
 	if reward_button_a == null or reward_button_b == null:
 		reward_button_a = get_node_or_null("RewardPanel/RewardButtons/RewardButton")
 		reward_button_b = get_node_or_null("RewardPanel/RewardButtons/RewardButton2")
 
-	pause_button = get_node_or_null("PauseButton")
-	pause_popup = get_node_or_null("PausePopup")
-	pause_resume_button = get_node_or_null("PausePopup/PauseVBox/ResumeButton")
-	pause_quit_button = get_node_or_null("PausePopup/PauseVBox/QuitButton")
-	if pause_popup != null:
-		pause_popup.visible = false
-		pause_popup.process_mode = Node.PROCESS_MODE_ALWAYS
-		pause_popup.modulate.a = 0.0
-		pause_popup.scale = PAUSE_POPUP_CLOSED_SCALE
-		pause_popup.pivot_offset = pause_popup.size * 0.5
-	if pause_button != null:
-		pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
-		pause_button.pivot_offset = pause_button.size * 0.5
-	if pause_resume_button != null:
-		pause_resume_button.process_mode = Node.PROCESS_MODE_ALWAYS
-	if pause_quit_button != null:
-		pause_quit_button.process_mode = Node.PROCESS_MODE_ALWAYS
-
 	meter_bar.max_value = run_state.temperature_max
 	reward_panel.visible = false
+
+func _setup_loading_overlay() -> void:
+	if _loading_overlay != null:
+		return
+
+	_loading_overlay = ColorRect.new()
+	_loading_overlay.name = "LoadingOverlay"
+	_loading_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_loading_overlay.color = Color(0.0, 0.0, 0.0, 0.72)
+	_loading_overlay.z_index = 10000
+	_loading_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_loading_overlay.visible = false
+	add_child(_loading_overlay)
+
+	_loading_label = Label.new()
+	_loading_label.name = "LoadingLabel"
+	_loading_label.text = "loading..."
+	_loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_loading_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_loading_label.add_theme_font_size_override("font_size", 34)
+	_loading_label.add_theme_color_override("font_color", Color.WHITE)
+	_loading_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_loading_overlay.add_child(_loading_label)
+
+func _show_loading_overlay() -> void:
+	if _loading_overlay != null:
+		_loading_overlay.visible = true
+		_loading_overlay.move_to_front()
+
+func _hide_loading_overlay() -> void:
+	if _loading_overlay != null:
+		_loading_overlay.visible = false
 
 func _setup_bar_textures() -> void:
 	if player_hp_bar != null:
@@ -331,12 +363,6 @@ func _bind_ui_events() -> void:
 		reward_button_a.pressed.connect(_on_reward_a)
 	if reward_button_b != null:
 		reward_button_b.pressed.connect(_on_reward_b)
-	if pause_button != null:
-		pause_button.pressed.connect(_on_pause_pressed)
-	if pause_resume_button != null:
-		pause_resume_button.pressed.connect(_on_pause_resume_pressed)
-	if pause_quit_button != null:
-		pause_quit_button.pressed.connect(_on_pause_quit_pressed)
 
 func _start_player_turn() -> void:
 	if battle_finished:
@@ -530,8 +556,8 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	click_button.pressed.connect(_on_hand_card_pressed.bind(hand_index))
 	click_button.mouse_entered.connect(_on_hand_card_mouse_entered.bind(card_root))
 	click_button.mouse_exited.connect(_on_hand_card_mouse_exited.bind(card_root))
-	click_button.mouse_exited.connect(_on_preview_owner_mouse_exited.bind(card.id))
-	click_button.gui_input.connect(_on_hand_card_gui_input.bind(card, effective_cost))
+	click_button.button_down.connect(_on_hand_card_button_down.bind(card, effective_cost))
+	click_button.button_up.connect(_on_hand_card_button_up)
 	card_surface.add_child(click_button)
 
 	if not can_play:
@@ -547,10 +573,6 @@ func _on_hand_card_mouse_entered(card_root: Control) -> void:
 
 func _on_hand_card_mouse_exited(card_root: Control) -> void:
 	_set_hand_card_hover(card_root, false)
-
-func _on_preview_owner_mouse_exited(card_id: String) -> void:
-	if drag_preview_active and _preview_card_id == card_id:
-		_hide_drag_preview()
 
 func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
 	if card_root == null:
@@ -583,18 +605,11 @@ func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
 				card_root.z_index = 0
 		)
 
-func _on_hand_card_gui_input(event: InputEvent, card: CardData, effective_cost: int) -> void:
-	if not (event is InputEventMouseButton):
-		return
-	var mouse_event := event as InputEventMouseButton
-	if mouse_event.button_index != MOUSE_BUTTON_RIGHT or not mouse_event.pressed:
-		return
-	accept_event()
+func _on_hand_card_button_down(card: CardData, effective_cost: int) -> void:
+	_show_drag_preview(card, effective_cost)
 
-	if drag_preview_active and _preview_card_id == card.id:
-		_hide_drag_preview()
-	else:
-		_show_drag_preview(card, effective_cost)
+func _on_hand_card_button_up() -> void:
+	_hide_drag_preview()
 
 func _setup_drag_preview_panel() -> void:
 	drag_preview_shadow_panel = Panel.new()
@@ -704,12 +719,10 @@ func _show_drag_preview(card: CardData, effective_cost: int) -> void:
 		drag_preview_shadow_panel.visible = true
 	drag_preview_panel.visible = true
 	drag_preview_active = true
-	_preview_card_id = card.id
 	_update_drag_preview_position()
 
 func _hide_drag_preview() -> void:
 	drag_preview_active = false
-	_preview_card_id = ""
 	if drag_preview_shadow_panel != null:
 		drag_preview_shadow_panel.visible = false
 	if drag_preview_panel != null:
@@ -805,26 +818,31 @@ func _play_hit_sfx() -> void:
 
 func _preload_attack_frames() -> void:
 	_attack_frames.clear()
-	for i in range(1, CHAR_ATTACK_FRAME_COUNT + 1):
-		var path := "%s/%d.png" % [CHAR_ATTACK_PATH, i]
-		if ResourceLoader.exists(path):
-			var tex := load(path)
-			if tex is Texture2D:
-				_attack_frames.append(tex)
 
 	_attack_overlay = TextureRect.new()
 	_attack_overlay.name = "PlayerAttackOverlay"
 	_attack_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_attack_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_attack_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_attack_overlay.z_index = 5
 	_attack_overlay.visible = false
 	if character_layer != null:
 		character_layer.add_child(_attack_overlay)
 	else:
 		add_child(_attack_overlay)
 
-	_player_dodge_frames = _load_sequence_frames(PLAYER_DODGE_PATH)
-	_player_heal_up_frames = _load_sequence_frames(PLAYER_HEAL_UP_PATH)
+	_projectile_overlay = TextureRect.new()
+	_projectile_overlay.name = "PlayerProjectileOverlay"
+	_projectile_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_projectile_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_projectile_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_projectile_overlay.z_index = 20
+	_projectile_overlay.visible = false
+	if character_layer != null:
+		character_layer.add_child(_projectile_overlay)
+	else:
+		add_child(_projectile_overlay)
+
 	if _player_fx_overlay == null:
 		_player_fx_overlay = TextureRect.new()
 		_player_fx_overlay.name = "PlayerFXOverlay"
@@ -837,21 +855,33 @@ func _preload_attack_frames() -> void:
 		else:
 			add_child(_player_fx_overlay)
 
-func _play_player_attack_animation() -> void:
+func _preload_battle_animation_frames() -> void:
+	_attack_frames = await _load_sequence_frames_yielding(CHAR_ATTACK_PATH)
+	_player_dodge_frames = await _load_sequence_frames_yielding(PLAYER_DODGE_PATH)
+	_player_heal_up_frames = await _load_sequence_frames_yielding(PLAYER_HEAL_UP_PATH)
+	_player_projectile_frame_cache.clear()
+	_player_projectile_frame_cache[PLAYER_WATER_PROJECTILE_PATH] = await _load_projectile_frames_yielding(PLAYER_WATER_PROJECTILE_PATH)
+	_player_projectile_frame_cache[PLAYER_BIO_PROJECTILE_PATH] = await _load_projectile_frames_yielding(PLAYER_BIO_PROJECTILE_PATH)
+	_player_projectile_frame_cache[PLAYER_THERMAL_PROJECTILE_PATH] = await _load_projectile_frames_yielding(PLAYER_THERMAL_PROJECTILE_PATH)
+	_player_idle_frames = await _load_numbered_frames_yielding(PLAYER_IDLE_PATH, PLAYER_IDLE_FRAME_START, PLAYER_IDLE_FRAME_END)
+	_enemy_idle_frames = await _load_enemy_idle_frames_yielding()
+	_enemy_attack_frames = await _load_enemy_attack_frames_yielding()
+	_enemy_projectile_frames = await _load_enemy_projectile_frames_yielding()
+	_start_idle_animation()
+
+func _play_player_attack_animation(element: int) -> void:
 	if player_mc == null:
 		return
 	if _attack_frames.size() == 0:
-		var t := create_tween()
-		t.tween_property(player_mc, "position:x", player_mc_base_pos.x + 600.0, 0.09)
-		t.tween_property(player_mc, "position:x", player_mc_base_pos.x, 0.11)
+		_attack_frames = _load_sequence_frames(CHAR_ATTACK_PATH)
+	if _attack_frames.size() == 0:
 		return
 
 	_attack_overlay.texture = _attack_frames[0]
 	_attack_overlay.size = player_mc.size
 	_attack_overlay.expand_mode = player_mc.expand_mode
 	_attack_overlay.stretch_mode = player_mc.stretch_mode
-	_attack_overlay.position = player_mc.position
-	_attack_overlay_start_x = _attack_overlay.position.x
+	_attack_overlay.position = player_mc_base_pos
 	_attack_overlay.visible = true
 	_attack_overlay.modulate = Color.WHITE
 	_attack_frame_index = 0
@@ -863,9 +893,8 @@ func _play_player_attack_animation() -> void:
 
 	var t := create_tween().set_parallel(true)
 	t.tween_method(_update_attack_frame.bind(total_frames), 0, total_frames, total_duration)
-	t.tween_property(_attack_overlay, "position:x", _attack_overlay_start_x + PLAYER_ATTACK_DASH_DISTANCE, PLAYER_ATTACK_HIT_TIME)
-	t.tween_property(_attack_overlay, "position:x", _attack_overlay_start_x, total_duration - PLAYER_ATTACK_HIT_TIME).set_delay(PLAYER_ATTACK_HIT_TIME)
 	t.tween_callback(_finish_player_attack_animation).set_delay(total_duration)
+	_play_player_projectile_animation(element)
 
 func _update_attack_frame(progress: float, total: int) -> void:
 	var idx := clampi(int(progress), 0, total - 1)
@@ -879,10 +908,83 @@ func _finish_player_attack_animation() -> void:
 	if _attack_overlay != null:
 		_attack_overlay.visible = false
 
+func _play_player_projectile_animation(element: int) -> void:
+	if _projectile_overlay == null:
+		return
+	if player_mc == null or enemy_mc == null:
+		return
+
+	_projectile_frames = _get_player_projectile_frames(element)
+	if _projectile_frames.size() == 0:
+		return
+
+	var start_pos := player_mc_base_pos + Vector2(player_mc.size.x * 0.7, player_mc.size.y * 0.36)
+	var end_pos := enemy_mc.position + Vector2(enemy_mc.size.x * 0.28, enemy_mc.size.y * 0.4)
+	var projectile_color := _get_player_projectile_color(element)
+	_projectile_overlay.texture = _projectile_frames[0]
+	_projectile_overlay.size = PLAYER_PROJECTILE_SIZE
+	_projectile_overlay.position = start_pos - (PLAYER_PROJECTILE_SIZE * 0.5)
+	_projectile_overlay.visible = false
+	_projectile_overlay.modulate = projectile_color
+	_projectile_overlay.flip_h = false
+	_projectile_frame_index = 0
+
+	var total_frames := _projectile_frames.size()
+	var t := create_tween().set_parallel(true)
+	t.tween_callback(func() -> void:
+		if _projectile_overlay != null:
+			_projectile_overlay.visible = true
+	).set_delay(PLAYER_PROJECTILE_DELAY)
+	t.tween_method(_update_player_projectile_progress.bind(start_pos, end_pos, total_frames), 0.0, 1.0, PLAYER_PROJECTILE_DURATION).set_delay(PLAYER_PROJECTILE_DELAY).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.tween_callback(_finish_player_projectile_animation).set_delay(PLAYER_ATTACK_HIT_TIME)
+
+func _update_player_projectile_progress(progress: float, start_pos: Vector2, end_pos: Vector2, total: int) -> void:
+	if _projectile_overlay == null:
+		return
+	var idx := clampi(int(round(progress * float(total - 1))), 0, total - 1)
+	if idx < _projectile_frames.size() and _projectile_overlay != null:
+		_projectile_overlay.texture = _projectile_frames[idx]
+	_projectile_overlay.position = start_pos.lerp(end_pos, progress) - (PLAYER_PROJECTILE_SIZE * 0.5)
+
+func _finish_player_projectile_animation() -> void:
+	if _projectile_overlay != null:
+		_projectile_overlay.visible = false
+
+func _get_player_projectile_frames(element: int) -> Array:
+	var projectile_path := _get_player_projectile_path(element)
+	if projectile_path == "":
+		return []
+	if not _player_projectile_frame_cache.has(projectile_path):
+		_player_projectile_frame_cache[projectile_path] = _load_projectile_frames(projectile_path)
+	var frames := _player_projectile_frame_cache[projectile_path] as Array
+	return frames
+
+func _get_player_projectile_path(element: int) -> String:
+	if element == GameEnums.ElementType.WATER:
+		return PLAYER_WATER_PROJECTILE_PATH
+	if element == GameEnums.ElementType.BIO:
+		return PLAYER_BIO_PROJECTILE_PATH
+	if element == GameEnums.ElementType.THERMAL:
+		return PLAYER_THERMAL_PROJECTILE_PATH
+	return ""
+
+func _get_player_projectile_color(element: int) -> Color:
+	if element == GameEnums.ElementType.WATER:
+		return Color(0.35, 0.75, 1.0, 1.0)
+	if element == GameEnums.ElementType.BIO:
+		return Color(0.45, 1.0, 0.4, 1.0)
+	if element == GameEnums.ElementType.THERMAL:
+		return Color(1.0, 0.45, 0.18, 1.0)
+	return Color.WHITE
+
 func _play_player_heal_animation() -> void:
+	if _player_heal_up_frames.size() == 0:
+		_player_heal_up_frames = _load_sequence_frames(PLAYER_HEAL_UP_PATH)
 	_play_player_fx_animation(_player_heal_up_frames, PLAYER_HEAL_UP_DURATION)
 
 func _play_player_dodge_animation() -> void:
+	if _player_dodge_frames.size() == 0:
+		_player_dodge_frames = _load_sequence_frames(PLAYER_DODGE_PATH)
 	_play_player_fx_animation(_player_dodge_frames, PLAYER_DODGE_DURATION)
 
 func _play_player_fx_animation(frames: Array, duration: float) -> void:
@@ -928,9 +1030,7 @@ func _finish_player_fx_animation() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
-		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
-			_hide_drag_preview()
-		elif mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_RIGHT:
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and (not mouse_event.pressed):
 			_hide_drag_preview()
 
 func _update_drag_preview_position() -> void:
@@ -951,29 +1051,28 @@ func _build_card_short_text(card: CardData) -> String:
 	var lines: Array[String] = []
 
 	if card.damage > 0:
-		lines.append("Damage %d" % card.damage)
+		lines.append("DMG %d" % card.damage)
 	if card.block > 0:
-		lines.append("Block %d" % card.block)
+		lines.append("BLK %d" % card.block)
 	if card.heal > 0:
-		lines.append("Heal %d" % card.heal)
+		lines.append("HEAL %d" % card.heal)
 	if card.meter_delta != 0:
-		var meter_label := "Turun" if card.meter_delta < 0 else "Naik"
-		lines.append("Temp %s %d" % [meter_label, absi(card.meter_delta)])
+		lines.append("TEMP %d" % card.meter_delta)
 	if card.draw_now > 0:
-		lines.append("Draw %d sekarang" % card.draw_now)
+		lines.append("DRAW %d" % card.draw_now)
 	if card.draw_next_turn > 0:
-		lines.append("Draw %d next turn" % card.draw_next_turn)
+		lines.append("NEXT DRAW %d" % card.draw_next_turn)
 	if card.heal_next_turn > 0:
-		lines.append("Heal %d next turn" % card.heal_next_turn)
+		lines.append("NEXT HEAL %d" % card.heal_next_turn)
 	if card.offensive_buff > 0:
-		lines.append("Buff damage +%d (combat)" % card.offensive_buff)
+		lines.append("BUFF %d" % card.offensive_buff)
 	if card.reduce_all_costs_this_turn:
-		lines.append("Semua cost -1 (turn ini)")
+		lines.append("ALL COST -1")
 	if card.exhaust:
-		lines.append("Exhaust")
+		lines.append("EXHAUST")
 
 	if lines.is_empty():
-		return "Tidak ada efek tambahan"
+		return "No extra effect"
 
 	return " | ".join(PackedStringArray(lines))
 
@@ -1033,15 +1132,12 @@ func _get_card_type_color(card_type: int, alpha: float = 1.0) -> Color:
 	return Color(0.98, 0.82, 0.35, alpha)
 
 func _build_card_text(card: CardData, effective_cost: int) -> String:
-	var text := "%s\nCost: %d\nType: %s | Element: %s\n" % [
+	var text := "%s\nCost: %d\nType: %s | Elemen: %s" % [
 		card.display_name,
 		effective_cost,
-		_get_card_type_label(card.type),
-		_get_element_label(card.element)
+		str(card.type),
+		str(card.element)
 	]
-	var gdd_desc := _get_card_gdd_description(card.id)
-	if gdd_desc != "":
-		text += "\nEfek : %s" % gdd_desc
 
 	if card.damage > 0: text += "\nDamage: %d" % card.damage
 	if card.block > 0: text += "\nBlock: %d" % card.block
@@ -1055,59 +1151,6 @@ func _build_card_text(card: CardData, effective_cost: int) -> String:
 	if card.exhaust: text += "\nExhaust"
 
 	return text
-
-func _get_card_type_label(card_type: int) -> String:
-	if card_type == GameEnums.CardType.DEFENSIVE:
-		return "Defensive"
-	if card_type == GameEnums.CardType.OFFENSIVE:
-		return "Offensive"
-	if card_type == GameEnums.CardType.UTILITY:
-		return "Utility"
-	if card_type == GameEnums.CardType.SCALING:
-		return "Scaling"
-	return "Unknown"
-
-func _get_element_label(element_type: int) -> String:
-	if element_type == GameEnums.ElementType.WATER:
-		return "Water"
-	if element_type == GameEnums.ElementType.THERMAL:
-		return "Thermal"
-	if element_type == GameEnums.ElementType.BIO:
-		return "Bio"
-	if element_type == GameEnums.ElementType.NEUTRAL:
-		return "Neutral"
-	return "Unknown"
-
-func _get_card_gdd_description(card_id: String) -> String:
-	match card_id:
-		"flood_barrier":
-			return "Block 7 damage, reduce flood intensity 1 turn."
-		"solar_shade":
-			return "Block 5 damage, reduce heat +1 next turn."
-		"mangrove_wall":
-			return "Block 4 damage, heal 2 HP next turn."
-		"urban_shield":
-			return "Block 8 damage this turn only."
-		"water_pump":
-			return "Deal 6 damage (x1.5 vs Flood)."
-		"solar_flare":
-			return "Deal 7 damage (x1.5 vs Heatwave)."
-		"policy_strike":
-			return "Deal 5 damage, draw 1 card."
-		"green_bomb":
-			return "Deal 10 damage, exhaust card."
-		"carbon_tax":
-			return "Lower Temperature Meter by 2."
-		"ev_initiative":
-			return "Draw 2 cards next turn."
-		"reforestation":
-			return "Heal 5 HP."
-		"green_new_deal":
-			return "All Offensive cards +2 damage this combat."
-		"climate_pact":
-			return "Reduce all card costs by 1 this turn."
-		_:
-			return ""
 
 func _get_effective_cost(card: CardData) -> int:
 	return maxi(0, card.cost - temporary_cost_reduction_this_turn)
@@ -1156,7 +1199,7 @@ func _apply_card_effects(card: CardData) -> void:
 		_play_sfx("sfx_mc_attack")
 		var damage := DamageCalculator.calculate_damage(card, enemy, offensive_buff_this_combat)
 		var mult := DamageCalculator.get_element_multiplier(enemy.type, card.element)
-		_play_player_attack_animation()
+		_play_player_attack_animation(card.element)
 		_queue_damage_effect(damage, mult)
 
 	if card.heal > 0:
@@ -1216,61 +1259,6 @@ func _on_end_turn_pressed() -> void:
 		return
 	_play_sfx("sfx_card_click")
 	_enemy_turn_async()
-
-func _on_pause_pressed() -> void:
-	if pause_popup == null or get_tree().paused:
-		return
-	_play_sfx("sfx_card_click")
-	_animate_pause_button_click()
-	await _animate_pause_popup(true)
-	_set_pause_state(true)
-
-func _on_pause_resume_pressed() -> void:
-	if pause_popup == null:
-		_set_pause_state(false)
-		return
-	_play_sfx("sfx_card_click")
-	_set_pause_state(false)
-	await _animate_pause_popup(false)
-
-func _on_pause_quit_pressed() -> void:
-	_play_sfx("sfx_card_click")
-	_set_pause_state(false)
-	get_tree().change_scene_to_file("res://scenes/Map.tscn")
-
-func _set_pause_state(paused: bool) -> void:
-	get_tree().paused = paused
-	if pause_popup != null:
-		pause_popup.visible = paused
-
-func _animate_pause_button_click() -> void:
-	if pause_button == null:
-		return
-	var tween := create_tween()
-	tween.tween_property(pause_button, "scale", PAUSE_BUTTON_PRESS_SCALE, PAUSE_BUTTON_PRESS_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(pause_button, "scale", Vector2.ONE, PAUSE_BUTTON_PRESS_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-
-func _animate_pause_popup(open_popup: bool) -> void:
-	if pause_popup == null:
-		return
-	if _pause_popup_tween != null:
-		_pause_popup_tween.kill()
-
-	if open_popup:
-		pause_popup.visible = true
-		pause_popup.modulate.a = 0.0
-		pause_popup.scale = PAUSE_POPUP_CLOSED_SCALE
-		_pause_popup_tween = create_tween().set_parallel(true)
-		_pause_popup_tween.tween_property(pause_popup, "modulate:a", 1.0, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		_pause_popup_tween.tween_property(pause_popup, "scale", PAUSE_POPUP_OPEN_SCALE, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		await _pause_popup_tween.finished
-		return
-
-	_pause_popup_tween = create_tween().set_parallel(true)
-	_pause_popup_tween.tween_property(pause_popup, "modulate:a", 0.0, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_pause_popup_tween.tween_property(pause_popup, "scale", PAUSE_POPUP_CLOSED_SCALE, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-	await _pause_popup_tween.finished
-	pause_popup.visible = false
 
 func _enemy_turn_async() -> void:
 	is_player_turn = false
@@ -1374,6 +1362,8 @@ func _show_reward_panel() -> void:
 	_apply_reward_button_card_visual(reward_button_a, reward_card_a)
 	_apply_reward_button_card_visual(reward_button_b, reward_card_b)
 
+	reward_panel.z_index = 1000
+	reward_panel.move_to_front()
 	reward_panel.visible = true
 
 func _apply_reward_button_card_visual(button: Button, card: CardData) -> void:
@@ -1427,11 +1417,9 @@ func _setup_character_art() -> void:
 
 	player_mc.texture = _load_first_texture(PLAYER_ART_CANDIDATES)
 	enemy_mc.texture = _load_first_texture(_get_enemy_art_candidates())
-	_preload_idle_frames()
 
 	player_mc_base_pos = player_mc.position
 	enemy_mc_base_pos = enemy_mc.position
-	_start_idle_animation()
 
 func _preload_idle_frames() -> void:
 	_player_idle_frames = _load_mc_idle_frames()
@@ -1484,10 +1472,89 @@ func _load_sequence_frames(base_path: String) -> Array:
 		idx += 1
 	return frames
 
+func _load_sequence_frames_yielding(base_path: String) -> Array:
+	var frames: Array = []
+	var idx := 1
+	while true:
+		var path := "%s/%d.png" % [base_path, idx]
+		if not ResourceLoader.exists(path):
+			break
+		var tex := load(path)
+		if tex is Texture2D:
+			frames.append(tex)
+		idx += 1
+		await get_tree().process_frame
+	return frames
+
+func _load_numbered_frames_yielding(base_path: String, first_frame: int, last_frame: int) -> Array:
+	var frames: Array = []
+	for idx in range(first_frame, last_frame + 1):
+		var path := "%s/%d.png" % [base_path, idx]
+		if ResourceLoader.exists(path):
+			var tex := load(path)
+			if tex is Texture2D:
+				frames.append(tex)
+		await get_tree().process_frame
+	return frames
+
+func _load_projectile_frames(base_path: String) -> Array:
+	var frames := _load_sequence_frames(base_path)
+	if frames.size() > 0:
+		return frames
+	if ResourceLoader.exists(base_path):
+		var tex := load(base_path)
+		if tex is Texture2D:
+			frames.append(tex)
+	return frames
+
+func _load_projectile_frames_yielding(base_path: String) -> Array:
+	var frames := await _load_sequence_frames_yielding(base_path)
+	if frames.size() > 0:
+		return frames
+	if ResourceLoader.exists(base_path):
+		var tex := load(base_path)
+		if tex is Texture2D:
+			frames.append(tex)
+	await get_tree().process_frame
+	return frames
+
 func _preload_enemy_attack_frames() -> void:
 	_enemy_attack_frames.clear()
 	if enemy == null:
 		return
+
+	if enemy.type != GameEnums.EnemyType.FLOOD and enemy.type != GameEnums.EnemyType.HEATWAVE and enemy.type != GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		return
+
+	if _enemy_attack_overlay == null:
+		_enemy_attack_overlay = TextureRect.new()
+		_enemy_attack_overlay.name = "EnemyAttackOverlay"
+		_enemy_attack_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_enemy_attack_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_enemy_attack_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_enemy_attack_overlay.z_index = 5
+		_enemy_attack_overlay.visible = false
+		if character_layer != null:
+			character_layer.add_child(_enemy_attack_overlay)
+		else:
+			add_child(_enemy_attack_overlay)
+
+	if _enemy_projectile_overlay == null:
+		_enemy_projectile_overlay = TextureRect.new()
+		_enemy_projectile_overlay.name = "EnemyProjectileOverlay"
+		_enemy_projectile_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_enemy_projectile_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_enemy_projectile_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_enemy_projectile_overlay.z_index = 20
+		_enemy_projectile_overlay.visible = false
+		if character_layer != null:
+			character_layer.add_child(_enemy_projectile_overlay)
+		else:
+			add_child(_enemy_projectile_overlay)
+
+func _load_enemy_attack_frames() -> Array:
+	if enemy == null:
+		return []
 
 	var attack_path := ""
 	var frame_count := 0
@@ -1501,26 +1568,65 @@ func _preload_enemy_attack_frames() -> void:
 		attack_path = BOSS_ATTACK_PATH
 		frame_count = BOSS_ATTACK_FRAME_COUNT
 	else:
-		return
+		return []
 
+	var frames: Array = []
 	for i in range(1, frame_count + 1):
 		var path := "%s/%d.png" % [attack_path, i]
 		if ResourceLoader.exists(path):
 			var tex := load(path)
 			if tex is Texture2D:
-				_enemy_attack_frames.append(tex)
+				frames.append(tex)
+	return frames
 
-	if _enemy_attack_overlay == null:
-		_enemy_attack_overlay = TextureRect.new()
-		_enemy_attack_overlay.name = "EnemyAttackOverlay"
-		_enemy_attack_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_enemy_attack_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		_enemy_attack_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		_enemy_attack_overlay.visible = false
-		if character_layer != null:
-			character_layer.add_child(_enemy_attack_overlay)
-		else:
-			add_child(_enemy_attack_overlay)
+func _load_enemy_attack_frames_yielding() -> Array:
+	if enemy == null:
+		return []
+
+	var attack_path := ""
+	var frame_count := 0
+	if enemy.type == GameEnums.EnemyType.FLOOD:
+		attack_path = FLOOD_ATTACK_PATH
+		frame_count = FLOOD_ATTACK_FRAME_COUNT
+	elif enemy.type == GameEnums.EnemyType.HEATWAVE:
+		attack_path = HEATWAVE_ATTACK_PATH
+		frame_count = HEATWAVE_ATTACK_FRAME_COUNT
+	elif enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		attack_path = BOSS_ATTACK_PATH
+		frame_count = BOSS_ATTACK_FRAME_COUNT
+	else:
+		return []
+
+	return await _load_numbered_frames_yielding(attack_path, 1, frame_count)
+
+func _load_enemy_projectile_frames() -> Array:
+	if enemy == null:
+		return []
+	if enemy.type == GameEnums.EnemyType.HEATWAVE:
+		return _load_projectile_frames(HEATWAVE_PROJECTILE_PATH)
+	if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		return _load_projectile_frames(BOSS_PROJECTILE_PATH)
+	return []
+
+func _load_enemy_projectile_frames_yielding() -> Array:
+	if enemy == null:
+		return []
+	if enemy.type == GameEnums.EnemyType.HEATWAVE:
+		return await _load_projectile_frames_yielding(HEATWAVE_PROJECTILE_PATH)
+	if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		return await _load_projectile_frames_yielding(BOSS_PROJECTILE_PATH)
+	return []
+
+func _load_enemy_idle_frames_yielding() -> Array:
+	if enemy == null:
+		return []
+	if enemy.type == GameEnums.EnemyType.FLOOD:
+		return await _load_numbered_frames_yielding(FLOOD_IDLE_PATH, FLOOD_IDLE_FRAME_START, FLOOD_IDLE_FRAME_END)
+	if enemy.type == GameEnums.EnemyType.HEATWAVE:
+		return await _load_sequence_frames_yielding(HEATWAVE_IDLE_PATH)
+	if enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE:
+		return await _load_sequence_frames_yielding(BOSS_IDLE_PATH)
+	return []
 
 func _get_enemy_art_candidates() -> Array[String]:
 	if enemy == null:
@@ -1609,6 +1715,9 @@ func _play_enemy_attack_animation() -> void:
 	if enemy_mc == null:
 		return
 
+	if _enemy_attack_frames.size() == 0:
+		_enemy_attack_frames = _load_enemy_attack_frames()
+
 	if enemy != null and (enemy.type == GameEnums.EnemyType.FLOOD or enemy.type == GameEnums.EnemyType.HEATWAVE or enemy.type == GameEnums.EnemyType.CLIMATE_COLLAPSE) and _enemy_attack_frames.size() > 0:
 		_enemy_attack_overlay.texture = _enemy_attack_frames[0]
 		_enemy_attack_overlay.size = enemy_mc.size
@@ -1635,6 +1744,7 @@ func _play_enemy_attack_animation() -> void:
 		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x - dash_distance, total_duration * 0.35)
 		t.tween_property(_enemy_attack_overlay, "position:x", _enemy_attack_overlay_start_x, total_duration - (total_duration * 0.35)).set_delay(total_duration * 0.35)
 		t.tween_callback(_finish_enemy_attack_animation).set_delay(total_duration)
+		_play_enemy_projectile_animation(total_duration)
 		await get_tree().create_timer(total_duration).timeout
 		return
 
@@ -1654,6 +1764,45 @@ func _finish_enemy_attack_animation() -> void:
 		enemy_mc.position.x = enemy_mc_base_pos.x
 	if _enemy_attack_overlay != null:
 		_enemy_attack_overlay.visible = false
+
+func _play_enemy_projectile_animation(total_duration: float) -> void:
+	if _enemy_projectile_overlay == null or _enemy_projectile_frames.size() == 0:
+		return
+	if enemy_mc == null or player_mc == null:
+		return
+
+	var projectile_delay := total_duration * 0.2
+	var projectile_duration := total_duration - projectile_delay
+	var start_pos := enemy_mc_base_pos + Vector2(enemy_mc.size.x * 0.25, enemy_mc.size.y * 0.42)
+	var end_pos := player_mc_base_pos + Vector2(player_mc.size.x * 0.72, player_mc.size.y * 0.42)
+	_enemy_projectile_overlay.texture = _enemy_projectile_frames[0]
+	_enemy_projectile_overlay.size = ENEMY_PROJECTILE_SIZE
+	_enemy_projectile_overlay.position = start_pos - (ENEMY_PROJECTILE_SIZE * 0.5)
+	_enemy_projectile_overlay.visible = false
+	_enemy_projectile_overlay.modulate = Color.WHITE
+	_enemy_projectile_overlay.flip_h = true
+	_enemy_projectile_frame_index = 0
+
+	var total_frames := _enemy_projectile_frames.size()
+	var t := create_tween().set_parallel(true)
+	t.tween_callback(func() -> void:
+		if _enemy_projectile_overlay != null:
+			_enemy_projectile_overlay.visible = true
+	).set_delay(projectile_delay)
+	t.tween_method(_update_enemy_projectile_progress.bind(start_pos, end_pos, total_frames), 0.0, 1.0, projectile_duration).set_delay(projectile_delay).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.tween_callback(_finish_enemy_projectile_animation).set_delay(total_duration)
+
+func _update_enemy_projectile_progress(progress: float, start_pos: Vector2, end_pos: Vector2, total: int) -> void:
+	if _enemy_projectile_overlay == null:
+		return
+	var idx := clampi(int(round(progress * float(total - 1))), 0, total - 1)
+	if idx < _enemy_projectile_frames.size() and _enemy_projectile_overlay != null:
+		_enemy_projectile_overlay.texture = _enemy_projectile_frames[idx]
+	_enemy_projectile_overlay.position = start_pos.lerp(end_pos, progress) - (ENEMY_PROJECTILE_SIZE * 0.5)
+
+func _finish_enemy_projectile_animation() -> void:
+	if _enemy_projectile_overlay != null:
+		_enemy_projectile_overlay.visible = false
 
 func _play_enemy_hit_animation() -> void:
 	if enemy_mc == null:
