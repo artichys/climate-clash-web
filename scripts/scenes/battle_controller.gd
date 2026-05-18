@@ -63,6 +63,11 @@ const PLAYER_HEAL_UP_PATH := "res://assets/placeholders/characters/charMCHealUp"
 const PLAYER_DODGE_DURATION := 0.55
 const PLAYER_HEAL_UP_DURATION := 0.7
 const BATTLE_INTRO_DURATION := 0.65
+const PAUSE_BUTTON_PRESS_DURATION := 0.08
+const PAUSE_POPUP_ANIM_DURATION := 0.14
+const PAUSE_BUTTON_PRESS_SCALE := Vector2(0.92, 0.92)
+const PAUSE_POPUP_OPEN_SCALE := Vector2(1.0, 1.0)
+const PAUSE_POPUP_CLOSED_SCALE := Vector2(0.94, 0.94)
 
 var run_state: RunState
 var audio_node
@@ -137,12 +142,18 @@ var _enemy_idle_frame_index: int = 0
 var _player_idle_timer: float = 0.0
 var _enemy_idle_timer: float = 0.0
 var _battle_intro_playing: bool = false
+var _preview_card_id: String = ""
 
 var reward_panel: Control
 var reward_button_a: Button
 var reward_button_b: Button
 var reward_card_a: CardData = null
 var reward_card_b: CardData = null
+var pause_button: Button
+var pause_popup: Control
+var pause_resume_button: Button
+var pause_quit_button: Button
+var _pause_popup_tween: Tween
 
 func _ready() -> void:
 	rng.randomize()
@@ -218,6 +229,24 @@ func _cache_ui_nodes() -> void:
 	if reward_button_a == null or reward_button_b == null:
 		reward_button_a = get_node_or_null("RewardPanel/RewardButtons/RewardButton")
 		reward_button_b = get_node_or_null("RewardPanel/RewardButtons/RewardButton2")
+
+	pause_button = get_node_or_null("PauseButton")
+	pause_popup = get_node_or_null("PausePopup")
+	pause_resume_button = get_node_or_null("PausePopup/PauseVBox/ResumeButton")
+	pause_quit_button = get_node_or_null("PausePopup/PauseVBox/QuitButton")
+	if pause_popup != null:
+		pause_popup.visible = false
+		pause_popup.process_mode = Node.PROCESS_MODE_ALWAYS
+		pause_popup.modulate.a = 0.0
+		pause_popup.scale = PAUSE_POPUP_CLOSED_SCALE
+		pause_popup.pivot_offset = pause_popup.size * 0.5
+	if pause_button != null:
+		pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
+		pause_button.pivot_offset = pause_button.size * 0.5
+	if pause_resume_button != null:
+		pause_resume_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	if pause_quit_button != null:
+		pause_quit_button.process_mode = Node.PROCESS_MODE_ALWAYS
 
 	meter_bar.max_value = run_state.temperature_max
 	reward_panel.visible = false
@@ -302,6 +331,12 @@ func _bind_ui_events() -> void:
 		reward_button_a.pressed.connect(_on_reward_a)
 	if reward_button_b != null:
 		reward_button_b.pressed.connect(_on_reward_b)
+	if pause_button != null:
+		pause_button.pressed.connect(_on_pause_pressed)
+	if pause_resume_button != null:
+		pause_resume_button.pressed.connect(_on_pause_resume_pressed)
+	if pause_quit_button != null:
+		pause_quit_button.pressed.connect(_on_pause_quit_pressed)
 
 func _start_player_turn() -> void:
 	if battle_finished:
@@ -495,8 +530,8 @@ func _create_hand_card_view(card: CardData, hand_index: int, effective_cost: int
 	click_button.pressed.connect(_on_hand_card_pressed.bind(hand_index))
 	click_button.mouse_entered.connect(_on_hand_card_mouse_entered.bind(card_root))
 	click_button.mouse_exited.connect(_on_hand_card_mouse_exited.bind(card_root))
-	click_button.button_down.connect(_on_hand_card_button_down.bind(card, effective_cost))
-	click_button.button_up.connect(_on_hand_card_button_up)
+	click_button.mouse_exited.connect(_on_preview_owner_mouse_exited.bind(card.id))
+	click_button.gui_input.connect(_on_hand_card_gui_input.bind(card, effective_cost))
 	card_surface.add_child(click_button)
 
 	if not can_play:
@@ -512,6 +547,10 @@ func _on_hand_card_mouse_entered(card_root: Control) -> void:
 
 func _on_hand_card_mouse_exited(card_root: Control) -> void:
 	_set_hand_card_hover(card_root, false)
+
+func _on_preview_owner_mouse_exited(card_id: String) -> void:
+	if drag_preview_active and _preview_card_id == card_id:
+		_hide_drag_preview()
 
 func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
 	if card_root == null:
@@ -544,11 +583,18 @@ func _set_hand_card_hover(card_root: Control, hovered: bool) -> void:
 				card_root.z_index = 0
 		)
 
-func _on_hand_card_button_down(card: CardData, effective_cost: int) -> void:
-	_show_drag_preview(card, effective_cost)
+func _on_hand_card_gui_input(event: InputEvent, card: CardData, effective_cost: int) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_RIGHT or not mouse_event.pressed:
+		return
+	accept_event()
 
-func _on_hand_card_button_up() -> void:
-	_hide_drag_preview()
+	if drag_preview_active and _preview_card_id == card.id:
+		_hide_drag_preview()
+	else:
+		_show_drag_preview(card, effective_cost)
 
 func _setup_drag_preview_panel() -> void:
 	drag_preview_shadow_panel = Panel.new()
@@ -658,10 +704,12 @@ func _show_drag_preview(card: CardData, effective_cost: int) -> void:
 		drag_preview_shadow_panel.visible = true
 	drag_preview_panel.visible = true
 	drag_preview_active = true
+	_preview_card_id = card.id
 	_update_drag_preview_position()
 
 func _hide_drag_preview() -> void:
 	drag_preview_active = false
+	_preview_card_id = ""
 	if drag_preview_shadow_panel != null:
 		drag_preview_shadow_panel.visible = false
 	if drag_preview_panel != null:
@@ -880,7 +928,9 @@ func _finish_player_fx_animation() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
-		if mouse_event.button_index == MOUSE_BUTTON_LEFT and (not mouse_event.pressed):
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			_hide_drag_preview()
+		elif mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_RIGHT:
 			_hide_drag_preview()
 
 func _update_drag_preview_position() -> void:
@@ -901,28 +951,29 @@ func _build_card_short_text(card: CardData) -> String:
 	var lines: Array[String] = []
 
 	if card.damage > 0:
-		lines.append("DMG %d" % card.damage)
+		lines.append("Damage %d" % card.damage)
 	if card.block > 0:
-		lines.append("BLK %d" % card.block)
+		lines.append("Block %d" % card.block)
 	if card.heal > 0:
-		lines.append("HEAL %d" % card.heal)
+		lines.append("Heal %d" % card.heal)
 	if card.meter_delta != 0:
-		lines.append("TEMP %d" % card.meter_delta)
+		var meter_label := "Turun" if card.meter_delta < 0 else "Naik"
+		lines.append("Temp %s %d" % [meter_label, absi(card.meter_delta)])
 	if card.draw_now > 0:
-		lines.append("DRAW %d" % card.draw_now)
+		lines.append("Draw %d sekarang" % card.draw_now)
 	if card.draw_next_turn > 0:
-		lines.append("NEXT DRAW %d" % card.draw_next_turn)
+		lines.append("Draw %d next turn" % card.draw_next_turn)
 	if card.heal_next_turn > 0:
-		lines.append("NEXT HEAL %d" % card.heal_next_turn)
+		lines.append("Heal %d next turn" % card.heal_next_turn)
 	if card.offensive_buff > 0:
-		lines.append("BUFF %d" % card.offensive_buff)
+		lines.append("Buff damage +%d (combat)" % card.offensive_buff)
 	if card.reduce_all_costs_this_turn:
-		lines.append("ALL COST -1")
+		lines.append("Semua cost -1 (turn ini)")
 	if card.exhaust:
-		lines.append("EXHAUST")
+		lines.append("Exhaust")
 
 	if lines.is_empty():
-		return "No extra effect"
+		return "Tidak ada efek tambahan"
 
 	return " | ".join(PackedStringArray(lines))
 
@@ -982,12 +1033,15 @@ func _get_card_type_color(card_type: int, alpha: float = 1.0) -> Color:
 	return Color(0.98, 0.82, 0.35, alpha)
 
 func _build_card_text(card: CardData, effective_cost: int) -> String:
-	var text := "%s\nCost: %d\nType: %s | Elemen: %s" % [
+	var text := "%s\nCost: %d\nType: %s | Element: %s\n" % [
 		card.display_name,
 		effective_cost,
-		str(card.type),
-		str(card.element)
+		_get_card_type_label(card.type),
+		_get_element_label(card.element)
 	]
+	var gdd_desc := _get_card_gdd_description(card.id)
+	if gdd_desc != "":
+		text += "\nEfek : %s" % gdd_desc
 
 	if card.damage > 0: text += "\nDamage: %d" % card.damage
 	if card.block > 0: text += "\nBlock: %d" % card.block
@@ -1001,6 +1055,59 @@ func _build_card_text(card: CardData, effective_cost: int) -> String:
 	if card.exhaust: text += "\nExhaust"
 
 	return text
+
+func _get_card_type_label(card_type: int) -> String:
+	if card_type == GameEnums.CardType.DEFENSIVE:
+		return "Defensive"
+	if card_type == GameEnums.CardType.OFFENSIVE:
+		return "Offensive"
+	if card_type == GameEnums.CardType.UTILITY:
+		return "Utility"
+	if card_type == GameEnums.CardType.SCALING:
+		return "Scaling"
+	return "Unknown"
+
+func _get_element_label(element_type: int) -> String:
+	if element_type == GameEnums.ElementType.WATER:
+		return "Water"
+	if element_type == GameEnums.ElementType.THERMAL:
+		return "Thermal"
+	if element_type == GameEnums.ElementType.BIO:
+		return "Bio"
+	if element_type == GameEnums.ElementType.NEUTRAL:
+		return "Neutral"
+	return "Unknown"
+
+func _get_card_gdd_description(card_id: String) -> String:
+	match card_id:
+		"flood_barrier":
+			return "Block 7 damage, reduce flood intensity 1 turn."
+		"solar_shade":
+			return "Block 5 damage, reduce heat +1 next turn."
+		"mangrove_wall":
+			return "Block 4 damage, heal 2 HP next turn."
+		"urban_shield":
+			return "Block 8 damage this turn only."
+		"water_pump":
+			return "Deal 6 damage (x1.5 vs Flood)."
+		"solar_flare":
+			return "Deal 7 damage (x1.5 vs Heatwave)."
+		"policy_strike":
+			return "Deal 5 damage, draw 1 card."
+		"green_bomb":
+			return "Deal 10 damage, exhaust card."
+		"carbon_tax":
+			return "Lower Temperature Meter by 2."
+		"ev_initiative":
+			return "Draw 2 cards next turn."
+		"reforestation":
+			return "Heal 5 HP."
+		"green_new_deal":
+			return "All Offensive cards +2 damage this combat."
+		"climate_pact":
+			return "Reduce all card costs by 1 this turn."
+		_:
+			return ""
 
 func _get_effective_cost(card: CardData) -> int:
 	return maxi(0, card.cost - temporary_cost_reduction_this_turn)
@@ -1109,6 +1216,61 @@ func _on_end_turn_pressed() -> void:
 		return
 	_play_sfx("sfx_card_click")
 	_enemy_turn_async()
+
+func _on_pause_pressed() -> void:
+	if pause_popup == null or get_tree().paused:
+		return
+	_play_sfx("sfx_card_click")
+	_animate_pause_button_click()
+	await _animate_pause_popup(true)
+	_set_pause_state(true)
+
+func _on_pause_resume_pressed() -> void:
+	if pause_popup == null:
+		_set_pause_state(false)
+		return
+	_play_sfx("sfx_card_click")
+	_set_pause_state(false)
+	await _animate_pause_popup(false)
+
+func _on_pause_quit_pressed() -> void:
+	_play_sfx("sfx_card_click")
+	_set_pause_state(false)
+	get_tree().change_scene_to_file("res://scenes/Map.tscn")
+
+func _set_pause_state(paused: bool) -> void:
+	get_tree().paused = paused
+	if pause_popup != null:
+		pause_popup.visible = paused
+
+func _animate_pause_button_click() -> void:
+	if pause_button == null:
+		return
+	var tween := create_tween()
+	tween.tween_property(pause_button, "scale", PAUSE_BUTTON_PRESS_SCALE, PAUSE_BUTTON_PRESS_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(pause_button, "scale", Vector2.ONE, PAUSE_BUTTON_PRESS_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _animate_pause_popup(open_popup: bool) -> void:
+	if pause_popup == null:
+		return
+	if _pause_popup_tween != null:
+		_pause_popup_tween.kill()
+
+	if open_popup:
+		pause_popup.visible = true
+		pause_popup.modulate.a = 0.0
+		pause_popup.scale = PAUSE_POPUP_CLOSED_SCALE
+		_pause_popup_tween = create_tween().set_parallel(true)
+		_pause_popup_tween.tween_property(pause_popup, "modulate:a", 1.0, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_pause_popup_tween.tween_property(pause_popup, "scale", PAUSE_POPUP_OPEN_SCALE, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		await _pause_popup_tween.finished
+		return
+
+	_pause_popup_tween = create_tween().set_parallel(true)
+	_pause_popup_tween.tween_property(pause_popup, "modulate:a", 0.0, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_pause_popup_tween.tween_property(pause_popup, "scale", PAUSE_POPUP_CLOSED_SCALE, PAUSE_POPUP_ANIM_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	await _pause_popup_tween.finished
+	pause_popup.visible = false
 
 func _enemy_turn_async() -> void:
 	is_player_turn = false
