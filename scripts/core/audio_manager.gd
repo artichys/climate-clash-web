@@ -15,7 +15,10 @@ const SFX_CANDIDATES := {
 	"sfx_hit": ["sfx_hit.wav", "sfx_hit.ogg"],
 	"sfx_heal": ["sfx_heal.wav", "sfx_heal.ogg", "sfx_hit.wav"],
 	"sfx_victory": ["sfx_victory.wav", "sfx_victory.ogg", "sfx_hit.wav"],
-	"sfx_lose": ["sfx_lose.wav", "sfx_lose.ogg", "sfx_hit.wav"]
+	"sfx_lose": ["sfx_lose.wav", "sfx_lose.ogg", "sfx_hit.wav"],
+	"sfx_mc_attack": ["MC_attack.wav"],
+	"sfx_mc_defend": ["MC_Defend.wav"],
+	"sfx_monster_attack": ["Monster_attack.wav"]
 }
 
 var _bgm_player: AudioStreamPlayer

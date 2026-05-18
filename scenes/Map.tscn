@@ -5,6 +5,8 @@
 [ext_resource type="Texture2D" uid="uid://ch3jqdmqrxq2o" path="res://assets/placeholders/ui/nodeMap/1.png" id="3_node_stage_1"]
 [ext_resource type="FontFile" uid="uid://uqx6muesuyyc" path="res://assets/placeholders/ui/fonts/main_font.ttf" id="3_yyirk"]
 [ext_resource type="FontFile" uid="uid://v77ih07e3tdj" path="res://assets/placeholders/ui/Pixelify_Sans/static/PixelifySans-Bold.ttf" id="4_41ykk"]
+[ext_resource type="Texture2D" uid="uid://b0fqyhk2oaq2r" path="res://assets/placeholders/ui/nodeMap/mapContinueButton.png" id="6_map_continue"]
+[ext_resource type="Texture2D" uid="uid://dcjg50ftyojex" path="res://assets/placeholders/ui/nodeMap/mapExitButton.png" id="7_map_exit"]
 
 [node name="Map" type="Control" unique_id=141948133]
 layout_mode = 3
@@ -77,10 +79,14 @@ text = "Node Progress:
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ContinueButton" type="Button" parent="Margin/VBox" unique_id=1534594358]
+[node name="ContinueButton" type="TextureButton" parent="Margin/VBox" unique_id=1534594358]
+custom_minimum_size = Vector2(360, 75)
 layout_mode = 2
-text = "Continue"
+texture_normal = ExtResource("6_map_continue")
+stretch_mode = 3
 
-[node name="BackButton" type="Button" parent="Margin/VBox" unique_id=1275331021]
+[node name="BackButton" type="TextureButton" parent="Margin/VBox" unique_id=1275331021]
+custom_minimum_size = Vector2(360, 75)
 layout_mode = 2
-text = "Back"
+texture_normal = ExtResource("7_map_exit")
+stretch_mode = 3

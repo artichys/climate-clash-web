@@ -179,6 +179,7 @@ theme_override_font_sizes/font_size = 20
 icon = ExtResource("13_end_turn")
 
 [node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

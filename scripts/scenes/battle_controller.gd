@@ -990,10 +990,12 @@ func _apply_card_effects(card: CardData) -> void:
 	_log("Main kartu: %s" % card.display_name)
 
 	if card.block > 0:
+		_play_sfx("sfx_mc_defend")
 		player_block += card.block
 		_log("Block +%d" % card.block)
 
 	if card.damage > 0:
+		_play_sfx("sfx_mc_attack")
 		var damage := DamageCalculator.calculate_damage(card, enemy, offensive_buff_this_combat)
 		var mult := DamageCalculator.get_element_multiplier(enemy.type, card.element)
 		_play_player_attack_animation()
@@ -1069,6 +1071,8 @@ func _enemy_turn_async() -> void:
 	var attack := _calculate_enemy_attack_damage()
 	var damage_to_hp := maxi(0, attack - player_block)
 	player_block = maxi(0, player_block - attack)
+	if attack > 0:
+		_play_sfx("sfx_monster_attack")
 	await _play_enemy_attack_animation()
 
 	if damage_to_hp > 0:
