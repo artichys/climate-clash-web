@@ -1154,10 +1154,26 @@ func _show_reward_panel() -> void:
 	reward_card_a = options[0]
 	reward_card_b = options[1]
 
-	reward_button_a.text = reward_card_a.display_name
-	reward_button_b.text = reward_card_b.display_name
+	_apply_reward_button_card_visual(reward_button_a, reward_card_a)
+	_apply_reward_button_card_visual(reward_button_b, reward_card_b)
 
 	reward_panel.visible = true
+
+func _apply_reward_button_card_visual(button: Button, card: CardData) -> void:
+	if button == null or card == null:
+		return
+
+	button.custom_minimum_size = Vector2(220, 320)
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	var art := _get_card_art(card.id)
+	if art != null:
+		button.icon = art
+		button.text = ""
+	else:
+		button.icon = null
+		button.text = card.display_name
 
 func _on_reward_a() -> void:
 	if reward_card_a != null:

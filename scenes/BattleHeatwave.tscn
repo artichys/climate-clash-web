@@ -13,7 +13,10 @@
 [ext_resource type="Texture2D" uid="uid://htefl45w4t0" path="res://assets/placeholders/ui/Bar/HeatHPHolder.png" id="10_heat_hp_holder"]
 [ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="11_temp_bar"]
 [ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="12_temp_bar_holder"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/ui/endTurn.png" id="13_end_turn"]
+[ext_resource type="Texture2D" uid="uid://bktfwh7aek4fl" path="res://assets/placeholders/ui/endTurn.png" id="13_end_turn"]
+[ext_resource type="Texture2D" uid="uid://dblk2n8gecxu8" path="res://assets/placeholders/ui/popUpReward.png" id="14_reward_popup"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_28bri"]
 
 [node name="BattleTemplate2" type="Control" unique_id=90234564]
 layout_mode = 3
@@ -171,13 +174,11 @@ layout_mode = 2
 
 [node name="EndTurnButton" type="Button" parent="Margin/VBox/BottomRow" unique_id=1805559408]
 layout_mode = 2
-icon = ExtResource("13_end_turn")
 theme_override_fonts/font = ExtResource("6_p548r")
 theme_override_font_sizes/font_size = 20
-text = ""
+icon = ExtResource("13_end_turn")
 
 [node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
-visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -190,14 +191,28 @@ offset_right = 492.0
 offset_bottom = 223.5
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_28bri")
+
+[node name="TextureRect" type="TextureRect" parent="RewardPanel" unique_id=425604085]
+layout_mode = 0
+offset_left = 75.0
+offset_top = -137.0
+offset_right = 906.70966
+offset_bottom = 541.5
+texture = ExtResource("14_reward_popup")
+expand_mode = 1
 
 [node name="RewardVbox" type="VBoxContainer" parent="RewardPanel" unique_id=898455546]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 321.99997
+offset_top = -12.5
+offset_right = 673.0
+offset_bottom = 30.0
 
 [node name="RewardTitle" type="Label" parent="RewardPanel/RewardVbox" unique_id=1129176704]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("6_p548r")
+theme_override_font_sizes/font_size = 33
 text = "Pilih 1 reward kartu"
 
 [node name="RewardButtons" type="HBoxContainer" parent="RewardPanel" unique_id=1885122269]
@@ -207,18 +222,24 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -156.0
-offset_top = -14.0
-offset_right = 156.0
-offset_bottom = 123.75
+offset_left = -260.0
+offset_top = -150.0
+offset_right = 260.0
+offset_bottom = 170.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
 
 [node name="RewardButton" type="Button" parent="RewardPanel/RewardButtons" unique_id=1694742244]
+custom_minimum_size = Vector2(220, 320)
 layout_mode = 2
-text = "Contoh Reward A"
+expand_icon = true
+
+[node name="Control" type="Control" parent="RewardPanel/RewardButtons" unique_id=1927504551]
+custom_minimum_size = Vector2(133.385, 0)
+layout_mode = 2
 
 [node name="RewardButton2" type="Button" parent="RewardPanel/RewardButtons" unique_id=261225078]
+custom_minimum_size = Vector2(220, 320)
 layout_mode = 2
-text = "Contoh Reward B"
+expand_icon = true
