@@ -62,6 +62,7 @@ const PLAYER_DODGE_PATH := "res://assets/placeholders/characters/charMCDodge"
 const PLAYER_HEAL_UP_PATH := "res://assets/placeholders/characters/charMCHealUp"
 const PLAYER_DODGE_DURATION := 0.55
 const PLAYER_HEAL_UP_DURATION := 0.7
+const BATTLE_INTRO_DURATION := 0.65
 
 var run_state: RunState
 var audio_node
@@ -135,6 +136,7 @@ var _player_idle_frame_index: int = 0
 var _enemy_idle_frame_index: int = 0
 var _player_idle_timer: float = 0.0
 var _enemy_idle_timer: float = 0.0
+var _battle_intro_playing: bool = false
 
 var reward_panel: Control
 var reward_button_a: Button
@@ -166,6 +168,7 @@ func _ready() -> void:
 	_play_combat_bgm()
 	_setup_character_art()
 	_preload_enemy_attack_frames()
+	await _play_battle_intro_animation()
 
 	deck_service = DeckService.new(run_state.deck_card_ids)
 	draw_bonus_next_turn += run_state.consume_pending_extra_draw()
@@ -665,7 +668,8 @@ func _hide_drag_preview() -> void:
 func _process(delta: float) -> void:
 	if drag_preview_active:
 		_update_drag_preview_position()
-	_update_idle_animation(delta)
+	if not _battle_intro_playing:
+		_update_idle_animation(delta)
 
 func _play_combat_bgm() -> void:
 	if audio_node == null:
@@ -677,6 +681,51 @@ func _play_sfx(sfx_id: String) -> void:
 	if audio_node == null:
 		return
 	audio_node.call("play_sfx", sfx_id)
+
+func _play_battle_intro_animation() -> void:
+	if _battle_intro_playing:
+		return
+
+	_battle_intro_playing = true
+	var ui_margin := get_node_or_null("Margin") as Control
+	var intro_overlay := ColorRect.new()
+	intro_overlay.color = Color(0.0, 0.0, 0.0, 1.0)
+	intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	intro_overlay.layout_mode = 1
+	intro_overlay.anchors_preset = Control.PRESET_FULL_RECT
+	add_child(intro_overlay)
+	move_child(intro_overlay, get_child_count() - 1)
+
+	var player_start_pos := player_mc_base_pos
+	var enemy_start_pos := enemy_mc_base_pos
+	var ui_start_pos := Vector2.ZERO
+
+	if player_mc != null:
+		player_mc.position = player_start_pos + Vector2(-220.0, 24.0)
+		player_mc.modulate.a = 0.0
+	if enemy_mc != null:
+		enemy_mc.position = enemy_start_pos + Vector2(220.0, -24.0)
+		enemy_mc.modulate.a = 0.0
+	if ui_margin != null:
+		ui_start_pos = ui_margin.position
+		ui_margin.position = ui_start_pos + Vector2(0.0, 42.0)
+		ui_margin.modulate.a = 0.0
+
+	var t := create_tween().set_parallel(true)
+	t.tween_property(intro_overlay, "modulate:a", 0.0, BATTLE_INTRO_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if player_mc != null:
+		t.tween_property(player_mc, "position", player_start_pos, BATTLE_INTRO_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		t.tween_property(player_mc, "modulate:a", 1.0, BATTLE_INTRO_DURATION * 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if enemy_mc != null:
+		t.tween_property(enemy_mc, "position", enemy_start_pos, BATTLE_INTRO_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		t.tween_property(enemy_mc, "modulate:a", 1.0, BATTLE_INTRO_DURATION * 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if ui_margin != null:
+		t.tween_property(ui_margin, "position", ui_start_pos, BATTLE_INTRO_DURATION * 0.85).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		t.tween_property(ui_margin, "modulate:a", 1.0, BATTLE_INTRO_DURATION * 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+	await t.finished
+	intro_overlay.queue_free()
+	_battle_intro_playing = false
 
 func _setup_audio() -> void:
 	if audio_node != null:

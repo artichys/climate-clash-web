@@ -1,12 +1,17 @@
 extends Control
 
 const NODE_MAP_IMAGE_BASE_PATH := "res://assets/placeholders/ui/nodeMap"
+const MAP_BUTTON_HOVER_SCALE := Vector2(1.05, 1.05)
+const MAP_BUTTON_PRESS_SCALE := Vector2(0.96, 0.96)
 
 var run_state: RunState
 var info_label: Label
 var node_list_label: Label
 var node_map_texture: TextureRect
 var audio_node
+var continue_button: TextureButton
+var back_button: TextureButton
+var _button_tweens: Dictionary = {}
 
 func _ready() -> void:
 	run_state = get_node("/root/RunStateNode")
@@ -29,8 +34,12 @@ func _ready() -> void:
 		if node_list_index >= 0:
 			vbox.move_child(node_map_texture, node_list_index)
 
-	get_node("Margin/VBox/ContinueButton").pressed.connect(_on_continue_pressed)
-	get_node("Margin/VBox/BackButton").pressed.connect(_on_back_pressed)
+	continue_button = get_node("Margin/VBox/ContinueButton")
+	back_button = get_node("Margin/VBox/BackButton")
+	continue_button.pressed.connect(_on_continue_pressed)
+	back_button.pressed.connect(_on_back_pressed)
+	_setup_map_button_animations(continue_button)
+	_setup_map_button_animations(back_button)
 
 	_refresh_view()
 
@@ -116,3 +125,42 @@ func _play_sfx(sfx_id: String) -> void:
 	if audio_node == null:
 		return
 	audio_node.call("play_sfx", sfx_id)
+
+func _setup_map_button_animations(button: TextureButton) -> void:
+	if button == null:
+		return
+	button.pivot_offset = button.custom_minimum_size * 0.5
+	button.mouse_entered.connect(_on_map_button_mouse_entered.bind(button))
+	button.mouse_exited.connect(_on_map_button_mouse_exited.bind(button))
+	button.button_down.connect(_on_map_button_button_down.bind(button))
+	button.button_up.connect(_on_map_button_button_up.bind(button))
+	button.modulate = Color(1.0, 1.0, 1.0, 0.97)
+
+func _on_map_button_mouse_entered(button: TextureButton) -> void:
+	_animate_map_button(button, MAP_BUTTON_HOVER_SCALE, 1.0, 0.13)
+
+func _on_map_button_mouse_exited(button: TextureButton) -> void:
+	_animate_map_button(button, Vector2.ONE, 0.97, 0.12)
+
+func _on_map_button_button_down(button: TextureButton) -> void:
+	_animate_map_button(button, MAP_BUTTON_PRESS_SCALE, 0.96, 0.08)
+
+func _on_map_button_button_up(button: TextureButton) -> void:
+	var target_scale := MAP_BUTTON_HOVER_SCALE if button.get_rect().has_point(button.get_local_mouse_position()) else Vector2.ONE
+	var target_alpha := 1.0 if target_scale == MAP_BUTTON_HOVER_SCALE else 0.97
+	_animate_map_button(button, target_scale, target_alpha, 0.1)
+
+func _animate_map_button(button: TextureButton, target_scale: Vector2, target_alpha: float, duration: float) -> void:
+	if button == null:
+		return
+
+	var key := button.get_instance_id()
+	if _button_tweens.has(key):
+		var old_tween: Variant = _button_tweens[key]
+		if old_tween is Tween:
+			(old_tween as Tween).kill()
+
+	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(button, "scale", target_scale, duration)
+	tween.tween_property(button, "modulate:a", target_alpha, duration)
+	_button_tweens[key] = tween
