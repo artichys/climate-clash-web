@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dvc6olvtdvp7x"
-path="res://.godot/imported/1.png-1f9c706cf443d3686a2d532cbae468ef.ctex"
+uid="uid://gthbajbr0l8s"
+path="res://.godot/imported/35.png-87f6b79e7afd39a92eb017b5488ab25f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/placeholders/characters/charBossIdle/1.png"
-dest_files=["res://.godot/imported/1.png-1f9c706cf443d3686a2d532cbae468ef.ctex"]
+source_file="res://assets/placeholders/characters/charHeatwaveIdle/35.png"
+dest_files=["res://.godot/imported/35.png-87f6b79e7afd39a92eb017b5488ab25f.ctex"]
 
 [params]
 

@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://bgf82qv77j7b3" path="res://assets/placeholders/ui/Bar/tempBar.png" id="9_temp_bar"]
 [ext_resource type="Texture2D" uid="uid://c2p0bxlietlbl" path="res://assets/placeholders/ui/Bar/tempBarHolder.png" id="10_s4itw"]
 [ext_resource type="Texture2D" uid="uid://bktfwh7aek4fl" path="res://assets/placeholders/ui/endTurn.png" id="11_end_turn"]
+[ext_resource type="Texture2D" uid="uid://dblk2n8gecxu8" path="res://assets/placeholders/ui/popUpReward.png" id="14_s4itw"]
 
 [sub_resource type="Image" id="Image_c8g63"]
 data = {
@@ -547,6 +548,8 @@ cache/0/20/0/glyphs/233/size = Vector2(12, 11)
 cache/0/20/0/glyphs/233/uv_rect = Rect2(119, 1, 12, 11)
 cache/0/20/0/glyphs/233/texture_idx = 0
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_28bri"]
+
 [node name="BattleTemplate3" type="Control" unique_id=90234564]
 layout_mode = 3
 anchors_preset = 15
@@ -702,7 +705,6 @@ theme_override_font_sizes/font_size = 20
 icon = ExtResource("11_end_turn")
 
 [node name="RewardPanel" type="Panel" parent="." unique_id=1813811737]
-visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -715,14 +717,28 @@ offset_right = 492.0
 offset_bottom = 223.5
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_28bri")
+
+[node name="TextureRect" type="TextureRect" parent="RewardPanel" unique_id=425604085]
+layout_mode = 0
+offset_left = 197.0
+offset_top = -27.0
+offset_right = 778.64514
+offset_bottom = 447.5
+texture = ExtResource("14_s4itw")
+expand_mode = 1
 
 [node name="RewardVbox" type="VBoxContainer" parent="RewardPanel" unique_id=898455546]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 371.0
+offset_top = 52.0
+offset_right = 625.0
+offset_bottom = 92.0
 
 [node name="RewardTitle" type="Label" parent="RewardPanel/RewardVbox" unique_id=1129176704]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("6_04wvw")
+theme_override_font_sizes/font_size = 26
 text = "Pilih 1 reward kartu"
 
 [node name="RewardButtons" type="HBoxContainer" parent="RewardPanel" unique_id=1885122269]
